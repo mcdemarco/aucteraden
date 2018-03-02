@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html manifest="aucteraden.appcache">
+<head>
+  <title>Aucteraden Scorer</title>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="Aucteraden Scoresheet"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui"/>
+  <link rel="stylesheet" href="css/main.css"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-180.png">
+	<link rel="shortcut icon" sizes="196x196" href="assets/favicon-196.png">
+	<link rel="icon" type="image/png" href="assets/favicon.png">
+
+  <script src="js/vue.js"></script>
+</head>
+<body>
+	<h1>Aucteraden Scoresheet</h1>
+  <div id="app">
+		<div class="wrapper">
+			<table>
+				<tr>
+					<th class="unbordered"></th>
+					<th v-for="suit in suits" class="unbordered"><img v-bind:src="'css/' + suit.name + '.png'"/></th>
+					<th class="unbordered"></th>
+				</tr>
+				<tr>
+					<th>Suit</th>
+					<th v-for="suit in suits" class="capitalize">{{suit.name}}</th>
+					<th>Totals</th>
+				</tr>
+				<tr>
+					<th>Length</th>
+					<td v-for="suit in suits"><input type="number" min="0" max="11" v-model.number="suit.length" /></td>
+					<td>{{suitTotal}}</td>
+				</tr>
+				<tr>
+					<th>Ace/Crown/Both</th>
+					<td v-for="suit in suits">
+						<input type="radio" id="ace" value="1" v-model.number="suit.acb" />
+						<input type="radio" id="crown" value="2" v-model.number="suit.acb" />
+						<input type="radio" id="both" value="4" v-model.number="suit.acb" />
+					</td>
+					<td>{{acbTotal}}</td>
+				</tr>
+				<tr>
+					<th>(Un)spent</th>
+					<td v-for="suit in suits"><input type="checkbox" v-model="suit.unspent"/></td>
+					<td>{{unspentTotal}}</td>
+				</tr>
+				<tr>
+					<th>Discards</th>
+					<td colspan="6"><input type="number" min="0" max="30" v-model.number="discards" /></td>
+					<td>{{discardTotal}}</td>
+				</tr>
+				<tr>
+					<th>Unfilled</th>
+					<td colspan="6"><input type="number" min="0" max="15" v-model.number="unfilled" /></td>
+					<td>{{unfilledTotal}}</td>
+				</tr>
+				<tr>
+					<td colspan="7" class="unbordered"></td>
+					<td><b>{{total}}</b></td>
+				</tr>
+			</table>
+		</div>
+		<div class="footer">
+			<p>
+				<input type="checkbox" id="extendedCheckbox" v-model="extended">
+				<label for="extendedCheckbox">Extended Decktet</label>
+			</p>
+		</div>
+		<div class="rules">
+			<div id="details">
+				<h2>Rules Cheatsheet</h2>
+				
+				<h3>Overview <button type="button" v-on:click="detail.setup = !detail.setup">{{detail.setup ? "-" : "+"}}</button></h3>
+				<div v-if="detail.setup">
+					<h4>Setup</h4>
+					<p>Aucteraden requires a single Decktet, four suit chips per Decktet suit, and either this scorekeeper or a way to keep score.  {{extended ? "" : "Remove the Excuse, Pawns, and Courts."}}  Take all the chips, and deal out three cards to form the market.</p>
+
+					<h4>Goals</h4>
+					
+					<p>The objective is to fill the tableau with sixteen cards that form the longest possible chains of orthogonally adjacent, increasing sequences of cards for each suit, preferably including Aces and/or Crowns, while neither spending all your chips of any suit or failing to spend at least one chip of each suit.  {{extended ? "Note that Pawns and Courts have a rank of zero (below Ace)." : ""}}</p>
+				</div>
+			</div>
+
+			<div id="turnOrder">
+				<h3>Turn Order</h3>
+				<ol>
+					<li><strong>Buy</strong> a card from the market.
+						<button type="button" v-on:click="detail.buy = !detail.buy">{{detail.buy ? "-" : "+"}}</button>
+						<p class="detail" v-if="detail.buy">The leftmost card costs two chips, the middle one chip, and the rightmost card is free.  {{ extended ? "Pawns and Courts cost one chip more than the market price." : "" }}  All chips paid must match a <b>single</b> suit of the card bought.  (That is, when paying more than one, they must all be the same color.)</p>
+						<p class="detail" v-if="detail.buy">If you are unable to place a card you must discard all of them for a 3 VP penalty. You may voluntarily discard all market cards for the same.</p>
+					</li>
+					<li><strong>Play</strong> to tableau.
+						<button type="button" v-on:click="detail.play = !detail.play">{{detail.play ? "-" : "+"}}</button>
+						<p class="detail" v-if="detail.play">The tableau may not grow beyond 4 cards in any direction.  Also Aces and Crowns may not be placed orthogonally adjacent, though they may be diagonally adjacent.  {{ extended ? "Similarly, Pawns and Courts may not be orthogonally adjacent." : "" }}</p>
+						<p class="detail" v-if="detail.play">To score victory points, ranks should be in order (allowing for holes):   {{ extended ? "Pawn/Court," : "" }} Ace, 2, 3, ..., 8, 9, Crown.</p>
+					</li>
+					<li><strong>Refill</strong> the market.
+						<button type="button" v-on:click="detail.refill = !detail.refill">{{detail.refill ? "-" : "+"}}</button>
+						<div class="detail" v-if="detail.refill">
+							<p>The Market should always contain three cards, unless the draw pile is exausted.</p>
+							<ol>
+								<li>Draw a new card.</li>
+								<li>{{ extended ? "If it is The Excuse, discard the entire market and The Excuse.  Otherwise, discard" : "Discard" }} any existing market cards that match any suits on the new card.   
+								</li>
+								<li>Fill in any market gaps by moving the cards to the right.</li>
+								<li>{{ extended ? "If it wasn't The Excuse, place" : "Place" }} the new card in the rightmost available space.</li>
+								<li>Fill in any remaining market gaps from the draw pile.  {{ extended ? "If you draw The Excuse, discard the entire market and The Excuse, and refill with three cards." : ""}}</li>
+							</ol>
+							<p>There is a <a href="https://boardgamegeek.com/article/19090213#19090213">rolling market variant</a> in which each drawn card is checked against the existing market, and the market cards possibly discarded, rather than only the first card {{ extended ? "and The Excuse" : "" }} forcing discards.</p>
+						</div>
+					</li>
+					<li><strong>Check</strong> the end game conditions.
+						<button type="button" v-on:click="detail.end = !detail.end">{{detail.end ? "-" : "+"}}</button>
+						<p class="detail" v-if="detail.end">If the tableau is full or the market is empty, the game is over.</p>
+					</li>
+				</ol>
+
+				<h3>Scoring <button type="button" v-on:click="detail.score = !detail.score">{{detail.score ? "-" : "+"}}</button></h3>
+				<div class="detail" v-if="detail.score">
+					<h4>Victory Points</h4>
+					<p>
+						Score one ascending chain per suit, according to the following table.
+					</p>
+					<table class="bordered">
+						<tbody>
+							<tr>
+								<th>Cards</th>
+								<td v-for="n in 7">{{scoreChart[n-1].count}}</td>
+								<td>7+</td>
+							</tr>
+							<tr>
+								<th>VP</th>
+								<td v-for="n in 8">{{scoreChart[n-1].vp}}</td>
+							</tr>
+						</tbody>
+					</table>
+					<p>
+						For each of the chains scored above, also score the following bonuses for including Aces and/or Crowns:
+					</p>
+					<ul>
+						<li><strong>Ace only</strong>: 1 VP</li>
+						<li><strong>Crown only</strong>: 2 VP</li>
+						<li><strong>Ace and Crown</strong>: 4 VP</li>
+					</ul>
+					<h4>Penalties</h4>
+					<ul>
+						<li><strong>-3 VP</strong> for each time you discarded the Market.</li>
+						<li><strong>-5 VP</strong> for each fully spent or fully unspent color of suit tokens.</li>
+						<li><strong>-5 VP</strong> for each hole in your tableau.</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+			<h2>Credits</h2>
+			<cite>The <a href="http://www.decktet.com">Decktet</a> is the creation of P.D. Magnus. Aucteraden is a solitaire Decktet game by Jack Neal; full rules are available at <a href="http://decktet.wikidot.com/game:aucteraden">the Decktet wiki</a>.</cite> 
+
+			<cite>This scoresheet and rules cheatsheet are by M. C. DeMarco; you may be interested in my other <a href="http://mcdemarco.net/games/decktet/">Decktet games</a>.</cite>
+			<cite>The suit images shown here are from cards released under a Creative Commons License by P.D. Magnus. The background texture is "Skulls" by Adam, from <a href="http://subtlepatterns.com/skulls/">Subtle Patterns</a>.</cite>
+		</div>
+  </div>
+
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+				biggerClass: 'bigger',
+				smallerClass: 'smaller',
+				badClass: 'bad smaller',
+				showStyle: 'display:block;',
+				hideStyle: 'display:none;',
+ 				roll1: '',
+				roll2: '',
+				suit1: '',
+				suit2: '',
+				crown: '',
+				taxation: '',
+				doubleTaxation: false,
+				extended: false,
+				detail: {setup: false, buy: false, refill: false, play: false, end: false, score: false},
+				suits: [{name: 'moons', length: 0, acb: 0, unspent: false},
+								{name: 'suns', length: 0, acb: 0, unspent: false},
+								{name: 'waves', length: 0, acb: 0, unspent: false},
+								{name: 'leaves', length: 0, acb: 0, unspent: false},
+								{name: 'wyrms', length: 0, acb: 0, unspent: false},
+								{name: 'knots', length: 0, acb: 0, unspent: false}],
+				discards: 0,
+				unfilled: 0,
+				scoreChart: [{count: 0, vp: -5},
+										 {count: 1, vp: -5},
+										 {count: 2, vp: 2},
+										 {count: 3, vp: 5},
+										 {count: 4, vp: 9},
+										 {count: 5, vp: 14},
+										 {count: 6, vp: 20},
+										 {count: 7, vp: 30},
+										 {count: 8, vp: 30},
+										 {count: 9, vp: 30},
+										 {count: 10, vp: 30},
+										 {count: 11, vp: 30}]
+      },
+			computed: {
+				acbTotal: function () {
+					var total = [];
+					Object.entries(this.suits).forEach(([key, val]) => {
+						total.push(val.acb) // the value of the current key.
+					});
+					return total.reduce(function(acc, sco) {
+						return acc + sco;
+					});
+				},
+				suitTotal: function () {
+					var total = [];
+					var scoreList = [-5,-5,2,5,9,14,20,30,30,30,30,30];
+					Object.entries(this.suits).forEach(([key, val]) => {
+						total.push(val.length) // the value of the current key.
+					});
+					return total.reduce(function(acc, count) {
+						return acc + scoreList[count];
+					});
+				},
+				unspentTotal: function () {
+					var total = [];
+					Object.entries(this.suits).forEach(([key, val]) => {
+						total.push(val.unspent ? -5 : 0) // the value of the current key.
+					});
+					return total.reduce(function(acc, pen) {
+						return acc + pen;
+					});
+				},
+				discardTotal: function () {
+					return this.discards * -3;
+				},
+				unfilledTotal: function () {
+					return this.unfilled * -5;
+				},
+				total: function () {
+					return this.acbTotal + this.suitTotal + this.unspentTotal + this.unfilledTotal + this.discardTotal;
+				}
+			},
+			methods: {
+				getSuitName: function(idx) {return this.suits[idx-1].name;},
+				rando: function(intr) {return Math.floor(Math.random() * intr + 1);}
+			}
+    })
+  </script>
+</body>
+</html>
