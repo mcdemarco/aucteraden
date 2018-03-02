@@ -1,0 +1,189 @@
+﻿/* Styles for Magnate Roller by M. C. DeMarco.
+   Background pattern from subtlepatterns.com */
+
+/* basics */
+
+* {
+    box-sizing:border-box;
+}
+
+/* layout */
+
+html, body {
+    box-sizing:border-box;
+    margin:0;
+    height:100%;
+    width:100%;
+}
+
+body {
+    height: 100vh;
+}
+
+/* font and color */
+
+@font-face {
+    font-family: "Fortune Letters";
+    src: url(../css/fortune-letters.ttf) format("truetype");
+}
+
+body {
+    background-image: url('../css/skulls.png');
+    font-family: 'Segoe UI', 'Century Gothic', 'Lucida Grande', Tahoma, 'Gill Sans', sans-serif;
+    color: #003;
+}
+
+div.wrapper, div.rules {
+    background-color: rgba(123,143,183,0.75); /* #7B8FB7 was #8E8EDA */
+    padding: 3%;
+    margin: 1% 10%;
+    height:auto;
+    border-radius:10px;
+}
+div.wrapper {
+/*    font-size: large;*/
+    text-align:center;
+}
+
+h1, h2, h3, h4, h5, h6, strong, label, th {
+    font-family: 'Fortune Letters', Futura, Geneva, sans-serif;
+}
+
+h1, h2, h3 {
+    text-align:center;
+}
+
+h2, h3 {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+button {
+    font-family: 'Fortune Letters', Futura, Geneva, sans-serif;
+    font-size: small;
+    padding: 3px 2px;
+    font-weight:bold;
+}
+
+button.mainButton {
+    margin: 5px;
+    padding: 4px 6px;
+    font-size: medium;
+    border-radius: 6px;
+    background-color: white;
+    font-weight:normal;
+}
+
+span.bigger {
+    font-size: x-large;
+    font-weight:bold;
+}
+
+span.smaller {
+    font-size: 18px;
+    color: #464653;
+}
+
+span.bad, span.smaller.bad {
+    color: #08089F;
+}
+
+span.bigger, span.smaller {
+    background-color: rgba(226,225,248,0.75); /*#E1E1F8*/
+    border-radius: 3px;
+}
+
+span.bigger {
+    margin: 4px;
+    padding: 4px 8px;
+    border: 2px solid #003;
+}
+
+span.smaller {
+    margin: 4px;
+    padding: 4px 8px;
+    border: 1px solid #464653;
+}
+
+span.smaller.bad {
+    border: 1px solid #08089F; /* hue: 240 */
+}
+
+a, a:visited, a:hover {
+    color: #30306C;
+}
+
+div.footer {
+    text-align:center;
+}
+div.footer:last-child {
+    padding-bottom:1em;
+}
+
+img {
+    height:30px;
+    vertical-align:bottom;
+    background-color: white;
+    border: 2px solid #38486C;
+    border-radius: 50%;
+}
+
+div.footer cite {
+    display:block;
+    font-size:smaller;
+}
+
+ul, ol {
+    line-height:1.5;
+}
+
+p.detail, div.detail {
+    font-size: smaller;
+    line-height:1;
+}
+
+/* mobile */
+
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+p, input, textarea {
+ -webkit-user-select: text;
+ -moz-user-select: text;
+ -ms-user-select: text;
+ user-select: text;
+}
+
+table {
+    border-collapse: collapse;
+    margin-left: 5%;
+}
+
+th, td {
+    border: 2px solid #38486C;
+    padding: 4px;
+    text-align:center;
+}
+
+table.bordered th {
+    text-align:right;
+    width: 20%;
+} 
+table.bordered td {
+    width: 10%;
+}
+
+td.unbordered, th.unbordered {
+    border: 0;
+}
+
+.capitalize {
+    text-transform: capitalize;
+}
+
+input[type=number] {
+    width: 4em;
+}
