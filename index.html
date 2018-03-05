@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html manifest="aucteraden.appcache">
+<html><!--  manifest="aucteraden.appcache" -->
 <head>
   <title>Aucteraden Scorer</title>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -68,7 +68,7 @@
 		</div>
 		<div class="footer">
 			<p>
-				<input type="checkbox" id="extendedCheckbox" v-model="extended">
+				<input type="checkbox" id="extendedCheckbox" :checked="extended" @change="extend">
 				<label for="extendedCheckbox">Extended Decktet</label>
 			</p>
 		</div>

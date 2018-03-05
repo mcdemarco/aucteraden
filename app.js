@@ -1,6 +1,21 @@
-    var app = new Vue({
-      el: '#app',
-      data: {
+Vue.use(Vuex);
+
+var store = new Vuex.Store({
+	state: {
+		extended: false
+	},
+	mutations: {
+		extend (state) {
+			state.extended = !state.extended;
+		}
+	}
+});
+
+
+var app = new Vue({
+  el: '#app',
+	store,
+	data: {
 				biggerClass: 'bigger',
 				smallerClass: 'smaller',
 				badClass: 'bad smaller',
@@ -11,9 +26,6 @@
 				suit1: '',
 				suit2: '',
 				crown: '',
-				taxation: '',
-				doubleTaxation: false,
-				extended: false,
 				detail: {setup: false, buy: false, refill: false, play: false, end: false, score: false},
 				suits: [{name: 'moons', length: 0, acb: 0, unspent: false},
 								{name: 'suns', length: 0, acb: 0, unspent: false},
@@ -35,12 +47,15 @@
 										 {count: 9, vp: 30},
 										 {count: 10, vp: 30},
 										 {count: 11, vp: 30}]
-      },
-			computed: {
+  },
+	computed: {
+		extended: function () {
+			return store.state.extended;
+		},
 				acbTotal: function () {
 					var total = [];
 					Object.entries(this.suits).forEach(([key, val]) => {
-						total.push(val.acb) // the value of the current key.
+						total.push(val.acb); // the value of the current key.
 					});
 					return total.reduce(function(acc, sco) {
 						return acc + sco;
@@ -50,7 +65,7 @@
 					var total = [];
 					var scoreList = [-5,-5,2,5,9,14,20,30,30,30,30,30];
 					Object.entries(this.suits).forEach(([key, val]) => {
-						total.push(val.length) // the value of the current key.
+						total.push(val.length); // the value of the current key.
 					});
 					return total.reduce(function(acc, count) {
 						return acc + scoreList[count];
@@ -59,7 +74,7 @@
 				unspentTotal: function () {
 					var total = [];
 					Object.entries(this.suits).forEach(([key, val]) => {
-						total.push(val.unspent ? -5 : 0) // the value of the current key.
+						total.push(val.unspent ? -5 : 0); // the value of the current key.
 					});
 					return total.reduce(function(acc, pen) {
 						return acc + pen;
@@ -76,7 +91,8 @@
 				}
 			},
 			methods: {
+				extend: function(e) {this.$store.commit('extend');}, 
 				getSuitName: function(idx) {return this.suits[idx-1].name;},
 				rando: function(intr) {return Math.floor(Math.random() * intr + 1);}
 			}
-    });
+});
