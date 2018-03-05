@@ -37,13 +37,17 @@
 					<td>{{suitTotal}}</td>
 				</tr>
 				<tr>
-					<th>Ace/Crown/Both</th>
+					<th>Ace</th>
 					<td v-for="suit in suits">
-						<input type="radio" id="ace" value="1" v-model.number="suit.acb" />
-						<input type="radio" id="crown" value="2" v-model.number="suit.acb" />
-						<input type="radio" id="both" value="4" v-model.number="suit.acb" />
+						<input type="checkbox" id="ace" v-model="suit.ace" />
 					</td>
-					<td>{{acbTotal}}</td>
+					<td rowspan=2>{{acbTotal}}</td>
+				</tr>
+				<tr>
+					<th>Crown</th>
+					<td v-for="suit in suits">
+						<input type="checkbox" id="crown" v-model="suit.crown" />
+					</td>
 				</tr>
 				<tr>
 					<th>(Un)spent</th>

@@ -18,12 +18,12 @@ var app = new Vue({
 	data: {
 				crown: '',
 				detail: {setup: false, buy: false, refill: false, play: false, end: false, score: false},
-				suits: [{name: 'moons', length: 0, acb: 0, unspent: false},
-								{name: 'suns', length: 0, acb: 0, unspent: false},
-								{name: 'waves', length: 0, acb: 0, unspent: false},
-								{name: 'leaves', length: 0, acb: 0, unspent: false},
-								{name: 'wyrms', length: 0, acb: 0, unspent: false},
-								{name: 'knots', length: 0, acb: 0, unspent: false}],
+				suits: [{name: 'moons', length: 0, ace: false, crown: false, unspent: false},
+								{name: 'suns', length: 0, ace: false, crown: false, unspent: false},
+								{name: 'waves', length: 0, ace: false, crown: false, unspent: false},
+								{name: 'leaves', length: 0, ace: false, crown: false, unspent: false},
+								{name: 'wyrms', length: 0, ace: false, crown: false, unspent: false},
+								{name: 'knots', length: 0, ace: false, crown: false, unspent: false}],
 				discards: 0,
 				unfilled: 0,
 				scoreChart: [{count: 0, vp: -5},
@@ -44,13 +44,13 @@ var app = new Vue({
 			return store.state.extended;
 		},
 				acbTotal: function () {
-					var total = [];
+					var total = 0;
 					Object.entries(this.suits).forEach(([key, val]) => {
-						total.push(val.acb); // the value of the current key.
+						total += val.ace ? 1 : 0;
+						total += val.crown ? 2 : 0;
+						total += (val.ace && val.crown) ? 1 : 0;
 					});
-					return total.reduce(function(acc, sco) {
-						return acc + sco;
-					});
+					return total;
 				},
 				suitTotal: function () {
 					var total = [];
