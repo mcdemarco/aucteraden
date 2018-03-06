@@ -33,16 +33,16 @@ body {
     color: #003;
 }
 
-div.wrapper, div.rules {
+div.wrapper {
     background-color: rgba(123,143,183,0.75); /* #7B8FB7 was #8E8EDA */
     padding: 3%;
     margin: 1% 10%;
     height:auto;
     border-radius:10px;
 }
-div.wrapper {
-/*    font-size: large;*/
+div.wrapper.big {
     text-align:center;
+    overflow:auto;
 }
 
 h1, h2, h3, h4, h5, h6, strong, label, th {
@@ -72,6 +72,14 @@ button.mainButton {
     border-radius: 6px;
     background-color: white;
     font-weight:normal;
+}
+
+span.nowrap {
+    white-space:nowrap;
+}
+
+span.padd {
+    padding: 0 1em;
 }
 
 span.bigger {

@@ -17,9 +17,24 @@
   <script src="js/vuex.js"></script>
 </head>
 <body>
-	<h1>Aucteraden Scoresheet</h1>
+	<h1>Aucteraden</h1>
   <div id="app">
-		<div class="wrapper">
+		<div class="footer">
+			<p>
+				<button type="button" v-on:click="show.play = !show.play">Play</button>
+				<button type="button" v-on:click="show.score = !show.score">Score</button>
+				<button type="button" v-on:click="show.rules = !show.rules">Rules</button>
+				<span class="nowrap padd">
+					<input type="checkbox" id="extendedCheckbox" :checked="extended" @change="extend">
+					<label for="extendedCheckbox">Extended Decktet</label>
+				</span>
+			</p>
+		</div>
+		<div class="wrapper big" v-if="show.play">
+			<h2>Play</h2>
+		</div>
+		<div class="wrapper big" v-if="show.score">
+			<h2>Scoresheet</h2>
 			<table>
 				<tr>
 					<th class="unbordered"></th>
@@ -70,18 +85,12 @@
 				</tr>
 			</table>
 		</div>
-		<div class="footer">
-			<p>
-				<input type="checkbox" id="extendedCheckbox" :checked="extended" @change="extend">
-				<label for="extendedCheckbox">Extended Decktet</label>
-			</p>
-		</div>
-		<div class="rules">
+		<div class="wrapper" v-if="show.rules">
 			<div id="details">
 				<h2>Rules Cheatsheet</h2>
 				
-				<h3>Overview <button type="button" v-on:click="detail.setup = !detail.setup">{{detail.setup ? "-" : "+"}}</button></h3>
-				<div v-if="detail.setup">
+				<h3>Overview <button type="button" v-on:click="rules.setup = !rules.setup">{{rules.setup ? "-" : "+"}}</button></h3>
+				<div v-if="rules.setup">
 					<h4>Setup</h4>
 					<p>Aucteraden requires a single Decktet, four suit chips per Decktet suit, and either this scorekeeper or a way to keep score.  {{extended ? "" : "Remove the Excuse, Pawns, and Courts."}}  Take all the chips, and deal out three cards to form the market.</p>
 
@@ -95,18 +104,18 @@
 				<h3>Turn Order</h3>
 				<ol>
 					<li><strong>Buy</strong> a card from the market.
-						<button type="button" v-on:click="detail.buy = !detail.buy">{{detail.buy ? "-" : "+"}}</button>
-						<p class="detail" v-if="detail.buy">The leftmost card costs two chips, the middle one chip, and the rightmost card is free.  {{ extended ? "Pawns and Courts cost one chip more than the market price." : "" }}  All chips paid must match a <b>single</b> suit of the card bought.  (That is, when paying more than one, they must all be the same color.)</p>
-						<p class="detail" v-if="detail.buy">If you are unable to place a card you must discard all of them for a 3 VP penalty. You may voluntarily discard all market cards for the same.</p>
+						<button type="button" v-on:click="rules.buy = !rules.buy">{{rules.buy ? "-" : "+"}}</button>
+						<p class="detail" v-if="rules.buy">The leftmost card costs two chips, the middle one chip, and the rightmost card is free.  {{ extended ? "Pawns and Courts cost one chip more than the market price." : "" }}  All chips paid must match a <b>single</b> suit of the card bought.  (That is, when paying more than one, they must all be the same color.)</p>
+						<p class="detail" v-if="rules.buy">If you are unable to place a card you must discard all of them for a 3 VP penalty. You may voluntarily discard all market cards for the same.</p>
 					</li>
 					<li><strong>Play</strong> to tableau.
-						<button type="button" v-on:click="detail.play = !detail.play">{{detail.play ? "-" : "+"}}</button>
-						<p class="detail" v-if="detail.play">The tableau may not grow beyond 4 cards in any direction.  Also Aces and Crowns may not be placed orthogonally adjacent, though they may be diagonally adjacent.  {{ extended ? "Similarly, Pawns and Courts may not be orthogonally adjacent." : "" }}</p>
-						<p class="detail" v-if="detail.play">To score victory points, ranks should be in order (allowing for holes):   {{ extended ? "Pawn/Court," : "" }} Ace, 2, 3, ..., 8, 9, Crown.</p>
+						<button type="button" v-on:click="rules.play = !rules.play">{{rules.play ? "-" : "+"}}</button>
+						<p class="detail" v-if="rules.play">The tableau may not grow beyond 4 cards in any direction.  Also Aces and Crowns may not be placed orthogonally adjacent, though they may be diagonally adjacent.  {{ extended ? "Similarly, Pawns and Courts may not be orthogonally adjacent." : "" }}</p>
+						<p class="detail" v-if="rules.play">To score victory points, ranks should be in order (allowing for holes):   {{ extended ? "Pawn/Court," : "" }} Ace, 2, 3, ..., 8, 9, Crown.</p>
 					</li>
 					<li><strong>Refill</strong> the market.
-						<button type="button" v-on:click="detail.refill = !detail.refill">{{detail.refill ? "-" : "+"}}</button>
-						<div class="detail" v-if="detail.refill">
+						<button type="button" v-on:click="rules.refill = !rules.refill">{{rules.refill ? "-" : "+"}}</button>
+						<div class="detail" v-if="rules.refill">
 							<p>The Market should always contain three cards, unless the draw pile is exausted.</p>
 							<ol>
 								<li>Draw a new card.</li>
@@ -120,13 +129,13 @@
 						</div>
 					</li>
 					<li><strong>Check</strong> the end game conditions.
-						<button type="button" v-on:click="detail.end = !detail.end">{{detail.end ? "-" : "+"}}</button>
-						<p class="detail" v-if="detail.end">If the tableau is full or the market is empty, the game is over.</p>
+						<button type="button" v-on:click="rules.end = !rules.end">{{rules.end ? "-" : "+"}}</button>
+						<p class="detail" v-if="rules.end">If the tableau is full or the market is empty, the game is over.</p>
 					</li>
 				</ol>
 
-				<h3>Scoring <button type="button" v-on:click="detail.score = !detail.score">{{detail.score ? "-" : "+"}}</button></h3>
-				<div class="detail" v-if="detail.score">
+				<h3>Scoring <button type="button" v-on:click="rules.score = !rules.score">{{rules.score ? "-" : "+"}}</button></h3>
+				<div class="detail" v-if="rules.score">
 					<h4>Victory Points</h4>
 					<p>
 						Score one ascending chain per suit, according to the following table.
@@ -169,6 +178,8 @@
 			<cite>The suit images shown here are from cards released under a Creative Commons License by P.D. Magnus. The background texture is "Skulls" by Adam, from <a href="http://subtlepatterns.com/skulls/">Subtle Patterns</a>.</cite>
 		</div>
   </div>
+	<script src="js/store/modules/settings.js"></script>
+	<script src="js/store/index.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

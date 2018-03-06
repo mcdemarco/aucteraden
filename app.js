@@ -1,23 +1,11 @@
-Vue.use(Vuex);
-
-var store = new Vuex.Store({
-	state: {
-		extended: false
-	},
-	mutations: {
-		extend (state) {
-			state.extended = !state.extended;
-		}
-	}
-});
-
+//js/store/index.js
 
 var app = new Vue({
   el: '#app',
 	store,
 	data: {
-				crown: '',
-				detail: {setup: false, buy: false, refill: false, play: false, end: false, score: false},
+				show: {play: false, score: false, rules: true},
+				rules: {setup: false, buy: false, refill: false, play: false, end: false, score: false},
 				suits: [{name: 'moons', length: 0, ace: false, crown: false, unspent: false},
 								{name: 'suns', length: 0, ace: false, crown: false, unspent: false},
 								{name: 'waves', length: 0, ace: false, crown: false, unspent: false},
@@ -41,7 +29,7 @@ var app = new Vue({
   },
 	computed: {
 		extended: function () {
-			return store.state.extended;
+			return store.state.modules.settings.getters.extended;
 		},
 				acbTotal: function () {
 					var total = 0;
@@ -82,7 +70,7 @@ var app = new Vue({
 				}
 			},
 			methods: {
-				extend: function(e) {this.$store.commit('extend');}, 
+				extend: function(e) {this.$store.dispatch('toggleExtendedDeck');}, 
 				getSuitName: function(idx) {return this.suits[idx-1].name;},
 				rando: function(intr) {return Math.floor(Math.random() * intr + 1);}
 			}
