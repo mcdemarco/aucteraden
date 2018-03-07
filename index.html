@@ -14,25 +14,27 @@
 	<link rel="icon" type="image/png" href="assets/favicon.png">
 
   <script src="js/vue.js"></script>
+  <script src="js/decktet.js"></script>
 </head>
 <body>
 	<h1>Aucteraden</h1>
   <div id="app">
 		<div class="footer">
 			<p>
-				<button type="button" v-on:click="show.play = !show.play">Play</button>
-				<button type="button" v-on:click="show.score = !show.score">Score</button>
-				<button type="button" v-on:click="show.rules = !show.rules">Rules</button>
+				<button type="button" v-on:click="settings.play = !settings.play">Play</button>
+				<button type="button" v-on:click="settings.score = !settings.score">Score</button>
+				<button type="button" v-on:click="settings.rules = !settings.rules">Rules</button>
 				<span class="nowrap padd">
 					<input type="checkbox" id="extendedCheckbox" :checked="extended" @change="extend">
 					<label for="extendedCheckbox">Extended Decktet</label>
 				</span>
 			</p>
 		</div>
-		<div class="wrapper big" v-if="show.play">
+		<div class="wrapper big" v-if="settings.play">
 			<h2>Play</h2>
+			<div id="market">{{market}}</div>
 		</div>
-		<div class="wrapper big" v-if="show.score">
+		<div class="wrapper big" v-if="settings.score">
 			<h2>Scoresheet</h2>
 			<table>
 				<tr>
@@ -84,7 +86,7 @@
 				</tr>
 			</table>
 		</div>
-		<div class="wrapper" v-if="show.rules">
+		<div class="wrapper" v-if="settings.rules">
 			<div id="details">
 				<h2>Rules Cheatsheet</h2>
 				

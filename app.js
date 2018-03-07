@@ -1,8 +1,12 @@
 var app = new Vue({
   el: '#app',
 	data: {
-		extended: false,
-		show: {play: false, score: false, rules: true},
+		settings: {extended: false,
+							 blackMoons: false,
+							 play: false, 
+							 score: false, 
+							 rules: true
+							},
 		rules: {setup: false, buy: false, refill: false, play: false, end: false, score: false},
 		suits: [{name: 'moons', length: 0, ace: false, crown: false, unspent: false},
 						{name: 'suns', length: 0, ace: false, crown: false, unspent: false},
@@ -26,7 +30,10 @@ var app = new Vue({
 								 {count: 11, vp: 30}]
   },
 	computed: {
-				acbTotal: function () {
+		extended: function () {
+			return this.settings.extended;
+		},
+		acbTotal: function () {
 					var total = 0;
 					Object.entries(this.suits).forEach(([key, val]) => {
 						total += val.ace ? 1 : 0;
@@ -34,8 +41,8 @@ var app = new Vue({
 						total += (val.ace && val.crown) ? 1 : 0;
 					});
 					return total;
-				},
-				suitTotal: function () {
+		},
+		suitTotal: function () {
 					var total = [];
 					var scoreList = [-5,-5,2,5,9,14,20,30,30,30,30,30];
 					Object.entries(this.suits).forEach(([key, val]) => {
@@ -44,8 +51,8 @@ var app = new Vue({
 					return total.reduce(function(acc, count) {
 						return acc + scoreList[count];
 					});
-				},
-				unspentTotal: function () {
+		},
+		unspentTotal: function () {
 					var total = [];
 					Object.entries(this.suits).forEach(([key, val]) => {
 						total.push(val.unspent ? -5 : 0); // the value of the current key.
@@ -53,20 +60,20 @@ var app = new Vue({
 					return total.reduce(function(acc, pen) {
 						return acc + pen;
 					});
-				},
-				discardTotal: function () {
+		},
+		discardTotal: function () {
 					return this.discards * -3;
-				},
-				unfilledTotal: function () {
+		},
+		unfilledTotal: function () {
 					return this.unfilled * -5;
-				},
-				total: function () {
+		},
+		total: function () {
 					return this.acbTotal + this.suitTotal + this.unspentTotal + this.unfilledTotal + this.discardTotal;
-				}
-			},
-			methods: {
-				extend: function(e) {this.extended = !this.extended;}, 
-				getSuitName: function(idx) {return this.suits[idx-1].name;},
-				rando: function(intr) {return Math.floor(Math.random() * intr + 1);}
-			}
+		}
+	},
+	methods: {
+		extend: function(e) {this.settings.extended = !this.settings.extended;}, 
+		getSuitName: function(idx) {return this.suits[idx-1].name;},
+		rando: function(intr) {return Math.floor(Math.random() * intr + 1);}
+	}
 });
