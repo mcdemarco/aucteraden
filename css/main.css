@@ -1,4 +1,4 @@
-﻿/* Styles for Magnate Roller by M. C. DeMarco.
+﻿/* Styles for Aucteraden by M. C. DeMarco.
    Background pattern from subtlepatterns.com */
 
 /* basics */
@@ -9,15 +9,23 @@
 
 /* layout */
 
-html, body {
+html, body, div.bodyWrapper {
     box-sizing:border-box;
     margin:0;
     height:100%;
     width:100%;
 }
 
-body {
-    height: 100vh;
+body, div.bodyWrapper {
+    height: 100vh; 
+}
+
+/* an unfortunate mithril necessity */
+div.bodyWrapper {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
 }
 
 /* font and color */
@@ -30,10 +38,10 @@ body {
 body {
     background-image: url('../css/skulls.png');
     font-family: 'Segoe UI', 'Century Gothic', 'Lucida Grande', Tahoma, 'Gill Sans', sans-serif;
-    color: #003;
+    color:#eeeeff;
 }
 
-div.wrapper, div.rules {
+div.wrapper {
     background-color: rgba(123,143,183,0.75); /* #7B8FB7 was #8E8EDA */
     padding: 3%;
     margin: 1% 10%;
@@ -49,20 +57,25 @@ h1, h2, h3, h4, h5, h6, strong, label, th {
     font-family: 'Fortune Letters', Futura, Geneva, sans-serif;
 }
 
-h1, h2, h3 {
-    text-align:center;
+h1, h2, h3, h4 {
+   text-align:center;
 }
 
-h2, h3 {
+h1 {
+    margin-bottom:0;
+}
+
+h2, h3, h4 {
     margin-top: 0;
     padding-top: 0;
 }
 
 button {
     font-family: 'Fortune Letters', Futura, Geneva, sans-serif;
-    font-size: small;
-    padding: 3px 2px;
     font-weight:bold;
+    font-size: medium;
+    padding: 3px 2px;
+    margin:5px;
 }
 
 button.mainButton {
@@ -81,7 +94,6 @@ span.bigger {
 
 span.smaller {
     font-size: 18px;
-    color: #464653;
 }
 
 span.bad, span.smaller.bad {
@@ -107,6 +119,10 @@ span.smaller {
 
 span.smaller.bad {
     border: 1px solid #08089F; /* hue: 240 */
+}
+
+.nowrapp {
+    white-space:nowrap;
 }
 
 a, a:visited, a:hover {
@@ -186,4 +202,179 @@ td.unbordered, th.unbordered {
 
 input[type=number] {
     width: 4em;
+}
+
+/* mithril section, trimmed */
+
+header {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    align-items: center;
+    margin-left: 1em;
+}
+
+main {
+    display: -webkit-flex;
+    display: flex;
+}
+
+/* the left column of main contains .versionWrapper, .roundWrapper, and .deckWrapper */
+div.leftColumn {
+    -webkit-flex: 0 0 425px;
+    flex: 0 0 425px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    margin-left: 1em;
+    height: 680px;
+}
+
+.reserveWrapper {
+    text-align:center;
+    -webkit-flex: 0 0 175px;
+    flex: 0 0 175px;
+}
+
+/* .foundationWrapper is the third column in main */
+
+
+.buttonWrapper, .versionWrapper, .deckWrapper, .roundWrapper, .marketWrapper {
+    display: -webkit-flex;
+    display: flex;
+}
+.roundWrapper {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+}
+
+.versionWrapper, .marketWrapper div {
+    -webkit-flex-direction: row;
+    flex-direction: row;
+}
+
+.versionWrapper {
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+}
+
+.buttonWrapper {
+    -webkit-justify-content: center;
+    justify-content: center;
+}
+
+.roundWrapper .message {
+    text-align:center;
+    min-height:20px;
+}
+
+/* inside deckWrapper */
+div.stock, div.waste, div.market {
+    margin: 5px;
+}
+
+/* the popup rules */
+
+div.modal {
+    position: fixed;
+    top: 15%;
+    right: 5%;
+    width:50%;
+    min-width:300px;
+    padding: 10px;
+    border: 2px solid #003;
+    border-radius: 12px;
+    z-index: 3;
+    box-shadow:0 1px 8px rgba(123,143,183,0.75);
+    background: linear-gradient(rgba(123,143,183,0.75), rgba(123,143,183,0.75)), url('../css/skulls.png');
+    text-align:center;
+}
+
+div.modal p {
+    text-align: justify;
+}
+/* there is also a div.rules inside the modal */
+
+
+/* font and color */
+
+@font-face {
+    font-family: "Fortune Letters";
+    src: url(../css/fortune-letters.ttf) format("truetype");
+}
+
+
+div.message {
+    color: coral;
+}
+
+div.versionWrapper p, p.description {
+    font-style:italic;
+    font-size:smaller;
+}
+
+/* cards */
+
+/* Sizing
+   original card size: 100x150
+   teeny size: 62x87
+   remix card size: 124x174
+   embiggened size: 186x261
+   card source file size: 372x522 
+*/
+
+img.card {
+    width:124px;
+    height:174px;
+    border-radius:6px;
+    background-color: rgba(123,143,183,0.95);
+    border:thin solid #003;
+    background-size:124px 174px;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    user-drag: none;
+}
+
+div.reserve, div.foundation {
+    height: 180px;
+    position: relative;
+}
+
+div.foundation {
+    min-width: 300px;
+}
+
+.foundation img.card, .reserve img.card {
+    position:absolute;
+}
+
+.reserve img.card {
+    left:20px;
+}
+
+
+/* mobile */
+
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+p, input, textarea {
+ -webkit-user-select: text;
+ -moz-user-select: text;
+ -ms-user-select: text;
+ user-select: text;
+}
+
+ol li {
+    text-align:left;
 }
