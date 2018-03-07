@@ -223,8 +223,8 @@ main {
 
 /* the left column of main contains .versionWrapper, .roundWrapper, and .deckWrapper */
 div.leftColumn {
-    -webkit-flex: 0 0 425px;
-    flex: 0 0 425px;
+    -webkit-flex: 0 0 400px;
+    flex: 0 0 400px;
     display: -webkit-flex;
     display: flex;
     -webkit-flex-direction: column;
@@ -232,8 +232,8 @@ div.leftColumn {
     -webkit-box-pack: justify;
     -webkit-justify-content: space-between;
     justify-content: space-between;
-    margin-left: 1em;
-    height: 680px;
+    margin: 0 1em;
+    height: 650px;
 }
 
 .reserveWrapper {
