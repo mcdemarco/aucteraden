@@ -107,6 +107,7 @@ aucteraden.drawMarket = function(game) {
 		game = aucteraden.drawRolling(game);
 		break;
 	}
+	game = aucteraden.done(game);
 	return game;
 };
 
@@ -115,8 +116,8 @@ aucteraden.Game = function() {
 		deck: aucteraden.shuffle(aucteraden.Deck()),
 		waste: [],
 		tableau: [],
-		foundation: [[],[],[]],
-		reserve: [[],[],[]],
+		foundation: [[]],
+		reserve: [[],[],[],[]],
 		market: [],
 		marketType: m.route.param("market"),
 		message: ""
@@ -148,6 +149,13 @@ aucteraden.findOne = function (haystack, arr) {
 	});
 };
 
+aucteraden.priceChecker = function(suitCard, price) {
+	//Can you afford it?
+	//var cardSuits = suitCard.suits();
+	console.log(suitCard);
+	return true;
+};
+
 aucteraden.suitChecker = function(suitCard, row, aceReserve) {
 	//Degenerate case (adding to an empty foundation).
 	var aces = m.route.param("market") == "aces";
@@ -160,13 +168,13 @@ aucteraden.suitChecker = function(suitCard, row, aceReserve) {
 };
 
 //row template
-aucteraden.rows = function(cardArray, classStub, shift) {
-	return m("div", {className: classStub + "Wrapper"},
-	         [0,1,2].map(function(val,idx) {
-		         return m("div", {className: classStub}, [
+aucteraden.rows = function(cardArray) {
+	return m("div", {className: "foundationWrapper"},
+	         cardArray.map(function(subArray,idx) {
+		         return m("div", {className: "foundation"}, [
 			         m("img", {className: "card", src: "cards/blank.png"}),
-			         cardArray[val].map(function(card,index) {
-				         return m("img", {className: "card", src: "cards/" + card.image(), style: shift ? "left: " + index * 20 + "px": ""});
+			         subArray.map(function(card,index) {
+				         return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em"});
 			         })
 		         ]);
 	         }));
@@ -198,16 +206,6 @@ aucteraden.drawRolling = function(game) {
 	return game;
 };
 
-aucteraden.draw = function(game) {
-	if (game.deck.length > 0) {
-		game.waste.push(game.deck.pop());
-		game.message = "";
-	} else {
-		game.message = "Dealt last card.";
-	}
-	return game;
-};
-
 aucteraden.turn = function(game) {
 	game = aucteraden.drawMarket(game);
 	if (game.deck.length == 0) 
@@ -215,20 +213,30 @@ aucteraden.turn = function(game) {
 	return game;
 }
 
+aucteraden.buy = function(game,price) {
+	//Buy a card from the market.
+	var playCard = game.market[price];
+	if (aucteraden.priceChecker(playCard,price)) {
+		game.foundation.push(game.market.splice(price,1));
+		game.message = "Played " + playCard.name() + " to tableau.";
+		game = aucteraden.drawMarket(game);
+	} else
+		game.message = "You cannot afford that card.";
+	return game;
+};
+
 aucteraden.play = function(game) {
-	//Play a card from the waste or reserve(s) to the appropriate foundation row.
-	if (game.waste.length > 0) {
-		var playCard = game.waste[game.waste.length - 1];
-		var found = aucteraden.nextFoundation(playCard,game.foundation);
-		var playRow = game.foundation[found];
-		var aceReserve = game.reserve[found];
+	//Play the purchased card to the foundation.
+	var playCard = game.waste[game.waste.length - 1];
+	var found = aucteraden.nextFoundation(playCard,game.foundation);
+	var playRow = game.foundation[found];
+	var aceReserve = game.reserve[found];
 		if (aucteraden.suitChecker(playCard,playRow,aceReserve)) {
 			game.foundation[found].push(game.waste.pop());
 			game.message = "Played " + playCard.name() + " to row " + (found + 1) + ".";
-			game = aucteraden.won(game);
+			game = aucteraden.done(game);
 		} else
 			game.message = "Suits do not match row " + (found + 1) + ".";
-	}
 	return game;
 };
 
@@ -241,24 +249,24 @@ aucteraden.playReserve = function(game,row) {
 		if (aucteraden.suitChecker(playCard,playRow)) {
 			game.foundation[found].push(game.reserve[row].pop());
 			game.message = "Played " + playCard.name() + " to row " + (found + 1) + ".";
-			game = aucteraden.won(game);
+			game = aucteraden.done(game);
 		} else
 			game.message = "Suits do not match row " + (found + 1) + ".";
 	}
 	return game;
 };
 
-aucteraden.won = function(game) {
+aucteraden.done = function(game) {
 	//Evaluate the game state for a victory.
-	var victory;
-	if (game.waste.length > 0 || game.deck.length > 0 )
-		victory = false;
-	else if (game.marketType == "reserve" && (game.reserve[2].length > 0 || game.reserve[1].length > 0 || game.reserve[0].length > 0))
-		victory = false;
+	var gameOver;
+	if (game.market.length == 0)
+		gameOver = true;
+	else if (game.foundation.reduce(function(acc, cur) {return acc + cur.length;},0) == 16)
+		gameOver = true;
 	else
-		victory = true;
-	if (victory)
-		game.message = "Victory!";
+		gameOver = false;
+	if (gameOver)
+		game.message = "Game over!";
 	return game;
 }
 
@@ -338,6 +346,10 @@ variants.controller = function() {
 		this.game = aucteraden.turn(this.game);
 	};
 
+	this.buy = function(row) {
+		this.game = aucteraden.buy(this.game,row);
+	};
+
 	this.play = function() {
 		this.game = aucteraden.play(this.game);
 	};
@@ -406,26 +418,14 @@ variants.view = function(ctrl) {
 					[2,1,0].map(function(row) {
 						return m("div", {className: "stock"}, [
 							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : ""))),
-							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.game.market[row].image() : "blank.png"), onclick: ctrl.play.bind(ctrl)})
+							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.game.market[row].image() : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
 						]);
 					})
 				])
 			]),
 
-			// Reserve
-			m("div", {className:  "reserveWrapper"},
-	      [0,1,2].map(function(row,idx) {
-		      return m("div", {className: "reserve"}, [
-			      m("img", {className: "card", src: "cards/blank.png"}),
-			      ctrl.game.reserve[row].map(function(card,index) {
-				      return m("img", {className: "card", src: "cards/" + (m.route.param("market") == "reserve" && (row + 1 >= ctrl.game.round) ? "back.png" : card.image()), style: m.route.param("market") == "aces" ? "left: " + index * 20 + "px": "", onclick: (m.route.param("market") == "reserve" && (row + 1 < ctrl.game.round) ? ctrl.playReserve.bind(ctrl,row) : "" )});
-			      })
-		      ]);
-	      })
-			 ),
-			
 			// Foundation
-			aucteraden.rows(ctrl.game.foundation, "foundation", true)
+			aucteraden.rows(ctrl.game.foundation)
 		]),
 		modal.view(function() {
 			return m("div", ctrl.versions.filter(function(v) {return v.type() == m.route.param("market"); })[0].rules());
