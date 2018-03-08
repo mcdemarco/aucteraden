@@ -17,7 +17,8 @@ html, body, div.bodyWrapper {
 }
 
 body, div.bodyWrapper {
-    height: 100vh; 
+    height: 100vh;
+    margin: 1em;
 }
 
 /* an unfortunate mithril necessity */
@@ -218,7 +219,6 @@ header {
     flex-direction: column;
     -webkit-align-items: center;
     align-items: center;
-    margin-left: 1em;
 }
 
 main {
@@ -237,7 +237,6 @@ div.leftColumn {
     -webkit-box-pack: justify;
     -webkit-justify-content: space-between;
     justify-content: space-between;
-    margin: 0 1em;
     height: 650px;
 }
 
@@ -247,10 +246,9 @@ div.leftColumn {
     flex: 0 0 175px;
 }
 
-/* .foundationWrapper is the third column in main */
+/* .foundationWrapper is the second column in main */
 
-
-.buttonWrapper, .versionWrapper, .deckWrapper, .roundWrapper, .marketWrapper {
+.buttonWrapper, .versionWrapper, .deckWrapper, .roundWrapper, .marketWrapper, .foundationWrapper {
     display: -webkit-flex;
     display: flex;
 }
@@ -259,11 +257,17 @@ div.leftColumn {
     flex-direction: column;
 }
 
-.versionWrapper, .marketWrapper div {
+.versionWrapper, .deckWrapper div, .marketWrapper div {
     -webkit-flex-direction: row;
     flex-direction: row;
 }
 
+.foundationWrapper {
+    min-height: 600px;
+    min-width: 600px;
+    -webkit-justify-content: space-around;
+    justify-content: space-around;
+}
 .versionWrapper {
     -webkit-justify-content: space-between;
     justify-content: space-between;
@@ -280,7 +284,7 @@ div.leftColumn {
 }
 
 /* inside deckWrapper */
-div.stock, div.waste, div.market {
+div.stock, div.waste, div.play, div.market {
     margin: 5px;
 }
 
@@ -355,20 +359,17 @@ div.reserve, div.foundation {
 div.waste {
     position: relative;
     z-index: 5;
+    min-width: 124px;
 }
 
 div.foundation {
-    min-width: 300px;
+    min-width: 600px;
+    min-height: 600px;
 }
 
-.foundation img.card, .reserve img.card, .waste img.card {
-    position:absolute;
+.foundation img.card, .waste img.card {
+    position: absolute;
 }
-
-.reserve img.card {
-    left:20px;
-}
-
 
 /* mobile */
 
