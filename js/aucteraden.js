@@ -206,6 +206,16 @@ aucteraden.drawMarket = function(game) {
 			break;
 		
 		case "rolling":
+			if (game.market.length == 0) {
+				game = aucteraden.drawSimpleOnce(game);
+				game = aucteraden.drawSimpleOnce(game);
+				game = aucteraden.drawSimpleOnce(game);
+			} else {
+				game = aucteraden.drawRollingRecursive(game);
+			}
+			break;
+
+		case "volatile":
 			game = aucteraden.drawRollingRecursive(game);
 			break;
 	}
@@ -326,7 +336,8 @@ variants.Version = function(data) {
 variants.VersionList = function() {
 	var list = [];
 	list.push(makeVersion("normal", "Normal market", "The usual market rules.", "market cards are only checked against the first drawn card."));
-	list.push(makeVersion("rolling", "Rolling market", "A volatile market variant.", "market cards are checked on most draws."));
+	list.push(makeVersion("rolling", "Rolling market", "A rolling market variant.", "market cards are checked on normal market refills, but not when the market is empty."));
+	list.push(makeVersion("volatile", "Volatile market", "Another rolling market variant.", "market cards are checked on all draws."));
 	return list;
 
 	function makeVersion(type, title, description, rules) {
