@@ -105,6 +105,14 @@ aucteraden.Rules = function() {
 	]);
 };
 
+/* debug */
+
+aucteraden.debug = function(msg) {
+	//comment out this line to turn off debugging.
+	if (console) console.log(msg);
+	return;
+};
+
 /* deck functions */
 
 aucteraden.shuffle = function(deck) {
@@ -130,7 +138,7 @@ aucteraden.findOne = function (haystack, arr) {
 aucteraden.priceChecker = function(suitCard, price) {
 	//Can you afford it?
 	//var cardSuits = suitCard.suits();
-	//console.log(suitCard);
+	//aucteraden.debug(suitCard);
 	return true;
 };
 
@@ -162,7 +170,7 @@ aucteraden.rows = function(cardArray) {
 aucteraden.clearMarket = function(game) {
 	game.waste = game.waste.concat(game.market);
 	game.market = [];
-	game = aucteraden.drawInitial(game);
+	game = aucteraden.drawMarket(game);
 	return game;
 };
 
@@ -178,43 +186,30 @@ aucteraden.drawExcuse = function(game) {
 	if (game.deck[game.deck.length-1].name() == 'the EXCUSE') {
 		var drawn = game.deck.pop();
 		game.message = "Drew the EXCUSE and cleared the market.";
-		console.log("Drew the EXCUSE and cleared the market.");
-		console.log(game.market.reduce(function(acc,cardObj){return acc + " " + cardObj.name();},"Market was: "));
+		aucteraden.debug("Drew the EXCUSE and cleared the market.");
+		aucteraden.debug(game.market.reduce(function(acc,cardObj){return acc + " " + cardObj.name();},"Market was: "));
 		game.waste.push(drawn);
 		game = aucteraden.clearMarket(game);
 	}
 	return game;
 };
 
-aucteraden.drawInitial = function(game) {
-	//Draw all three cards without suit checking.
-	//May still be an excuse, and may not actually be the initial draw.
-	game = aucteraden.drawSimpleOnce(game);
-	game = aucteraden.drawSimpleOnce(game);
-	game = aucteraden.drawSimpleOnce(game);
-	return game;
-};
-
-aucteraden.drawMarket = function(game,initial) {
+aucteraden.drawMarket = function(game) {
 	game.message = "";
-	console.log("Drawing the market.");
-	if (initial) {
-		game = aucteraden.drawInitial(game);
-	} else {
-		switch (game.marketType) {
-			case "normal":
-			//We need 
+	aucteraden.debug("Drawing the market.");
+	switch (game.marketType) {
+		case "normal":
+			//Note that if the market is empty, the first rolling is simple.
 			game = aucteraden.drawRollingOnce(game);
 			game = aucteraden.drawSimpleOnce(game);
 			game = aucteraden.drawSimpleOnce(game);
 			break;
 		
-			case "rolling":
+		case "rolling":
 			game = aucteraden.drawRollingRecursive(game);
 			break;
-		}
-		game = aucteraden.done(game);
 	}
+	game = aucteraden.done(game);
 	return game;
 };
 
@@ -227,7 +222,7 @@ aucteraden.drawSimpleOnce = function(game) {
 			var drawn = game.deck.pop();
 			game.market.push(drawn);
 			game.message = "Drew " + drawn.name() + ". ";
-			console.log("Drew " + drawn.name() + ".");
+			aucteraden.debug("Drew " + drawn.name() + ".");
 		}
 	}
 	return game;
@@ -241,13 +236,13 @@ aucteraden.drawRollingOnce = function(game) {
 		} else {
 			var drawn = game.deck.pop();
 			game.message = "Drew " + drawn.name() + ". ";
-			console.log("Drew " + drawn.name() + " (rolling once).");
+			aucteraden.debug("Drew " + drawn.name() + " (rolling).");
 			var suits = drawn.suits();
 			//Suit nuking removes matching cards from the market.
 			for (var idx = game.market.length; idx > 0; idx--) {
 				var cardObj = game.market[idx-1];
 				if (cardObj.hasOwnProperty("suits") && aucteraden.findOne(cardObj.suits(),suits)) {
-					console.log("Discarded " + cardObj.name() + ".");
+					aucteraden.debug("Discarded " + cardObj.name() + ".");
 					game.waste.push(game.market.splice(idx-1,1)[0]);
 				};
 			};
@@ -258,11 +253,11 @@ aucteraden.drawRollingOnce = function(game) {
 };
 
 aucteraden.drawRollingRecursive = function(game) {
+	aucteraden.debug("Begin rolling market draw.");
 	while (game.market.length < 3 && game.deck.length > 0) {
-		console.log("roll in");
 		game = aucteraden.drawRollingOnce(game);
-		console.log("roll out");
 	}
+	aucteraden.debug("End rolling market draw.");
 	return game;
 };
 
@@ -274,11 +269,11 @@ aucteraden.buy = function(game,price) {
 		return game;
 
 	var playCard = game.market[price];
-	console.log("Trying to buy " + playCard.name() + ".");
+	aucteraden.debug("Trying to buy " + playCard.name() + ".");
 
 	if (aucteraden.priceChecker(playCard,price)) {
 		game.foundation.push(game.market.splice(price,1));
-		console.log("Played " + playCard.name() + " to tableau.");
+		aucteraden.debug("Played " + playCard.name() + " to tableau.");
 		game = aucteraden.drawMarket(game);
 	} else
 		game.message = "You cannot afford that card.";
@@ -331,7 +326,7 @@ variants.Version = function(data) {
 variants.VersionList = function() {
 	var list = [];
 	list.push(makeVersion("normal", "Normal market", "The usual market rules.", "market cards are only checked against the first drawn card."));
-	list.push(makeVersion("rolling", "Rolling market", "A volatile market variant.", "market cards are checked on all draws."));
+	list.push(makeVersion("rolling", "Rolling market", "A volatile market variant.", "market cards are checked on most draws."));
 	return list;
 
 	function makeVersion(type, title, description, rules) {
