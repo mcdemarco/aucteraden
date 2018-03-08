@@ -79,9 +79,8 @@ aucteraden.Game = function() {
 	var game = {
 		deck: aucteraden.shuffle(aucteraden.Deck()),
 		waste: [],
-		tableau: [],
-		foundation: [],
-		reserve: [[],[],[],[]],
+		play: aucteraden.makeBlank(),
+		foundation: [[aucteraden.makeBlank()]],
 		market: [],
 		marketType: m.route.param("market"),
 		message: "",
@@ -126,6 +125,15 @@ aucteraden.shuffle = function(deck) {
 	return shuffled;
 };
 
+aucteraden.makeBlank = function() {
+	return new aucteraden.Card({
+		rank: -1,
+		suits: [],
+		name: "blank",
+		image: "blank.png"
+	});
+};
+
 /* suit and price checking */
 
 aucteraden.findOne = function (haystack, arr) {
@@ -142,26 +150,34 @@ aucteraden.priceChecker = function(suitCard, price) {
 	return true;
 };
 
-aucteraden.rankChecker = function(suitCard, row, aceReserve) {
+aucteraden.rankChecker = function(suitCard, row) {
 	//Degenerate case (adding to an empty foundation).
 	var aces = m.route.param("market") == "aces";
 	if (!aces && row.length == 0)
 		return true;
 	//Normal case.
 	var cardSuits = suitCard.suits();
-	var rowSuits = (aces ? aceReserve.map(function(cardObj,idx) { return cardObj.suits()[0]; }, []) : row[row.length - 1].suits());
+	var rowSuits;
 	return aucteraden.findOne(cardSuits, rowSuits);
 };
 
 //row template
-aucteraden.rows = function(cardArray) {
+aucteraden.viewFoundation = function(ctrl) {
+	var cardArray = ctrl.game.foundation;
+	aucteraden.debug(cardArray);
 	return m("div", {className: "foundationWrapper"},
 	         cardArray.map(function(subArray,idx) {
-		         return m("div", {className: "foundation"}, [
-			         subArray.map(function(card,index) {
-				         return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em"});
-			         })
-		         ]);
+						 if (subArray.length > 0) {
+							 return m("div", {className: "foundation"}, [
+								 subArray.map(function(card,index) {
+									 return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em", onclick: ctrl.play.bind(ctrl,idx,index)});
+								 })
+							 ]);
+						 } else {
+							 return m("div", {className: "foundation"}, [
+								 m("img", {className: "card", src: "cards/blank.png", style: "left: 1em"})
+							 ]);
+						 }
 	         }));
 };
 
@@ -277,22 +293,31 @@ aucteraden.buy = function(game,price) {
 	//Buy a card from the market.
 	if (game.over)
 		return game;
+	//Buy a card from the market.
+	if (game.play.name() != "blank") {
+		game.message = "Play previous card first.";
+		return game;
+	}
 
 	var playCard = game.market[price];
 	aucteraden.debug("Trying to buy " + playCard.name() + ".");
 
-	if (aucteraden.priceChecker(playCard,price)) {
-		game.foundation.push(game.market.splice(price,1));
-		aucteraden.debug("Played " + playCard.name() + " to tableau.");
-		game = aucteraden.drawMarket(game);
-	} else
+	if (!aucteraden.priceChecker(playCard,price)) {
 		game.message = "You cannot afford that card.";
+	} else {
+		//Playability checker should go here.
+		game.play = game.market.splice(price,1)[0];
+		aucteraden.debug("Playing " + playCard.name() + ".");
+		game = aucteraden.drawMarket(game);
+	} 
 	return game;
 };
 
-aucteraden.play = function(game) {
+aucteraden.play = function(game,x,y) {
 	//Play the purchased card to the foundation.
 	//game.message = "Played " + playCard.name() + " to row " + (found + 1) + ".";
+	game.foundation[x][y] = game.play;
+	game.play = aucteraden.makeBlank();
 	game = aucteraden.done(game);
 	return game;
 };
@@ -396,8 +421,8 @@ variants.controller = function() {
 		this.game = aucteraden.buy(this.game,row);
 	};
 
-	this.play = function() {
-		this.game = aucteraden.play(this.game);
+	this.play = function(x,y) {
+		this.game = aucteraden.play(this.game,x,y);
 	};
 
 };
@@ -456,6 +481,10 @@ variants.view = function(ctrl) {
 						ctrl.game.waste.map(function(cardObj,index) {
 							return m("img", {className: "card", src: "cards/" + cardObj.image(), onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
 						})
+					]),
+					m("div", {className: "play"}, [
+						m("h4","Play"),
+						m("img", {className: "card", src: "cards/" + ctrl.game.play.image(), onclick: ctrl.play.bind(ctrl)})
 					])
 				]),
 				// Market.
@@ -470,7 +499,7 @@ variants.view = function(ctrl) {
 			]),
 
 			// Foundation
-			aucteraden.rows(ctrl.game.foundation)
+			aucteraden.viewFoundation(ctrl)
 		]),
 		modal.view(function() {
 			return m("div", ctrl.versions.filter(function(v) {return v.type() == m.route.param("market"); })[0].rules());
