@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html><!--  manifest="aucteraden.appcache" -->
+<head>
+  <title>Aucteraden Scorer</title>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="Aucteraden Scoresheet"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui"/>
+  <link rel="stylesheet" href="css/main.css"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-180.png">
+	<link rel="shortcut icon" sizes="196x196" href="assets/favicon-196.png">
+	<link rel="icon" type="image/png" href="assets/favicon.png">
+
+  <script src="js/vue.js"></script>
+</head>
+<body class="scorer">
+	<h1>Aucteraden Scorer</h1>
+  <div id="app">
+		<div class="footer">
+			<p>
+				<button type="button" v-on:click="settings.play = !settings.play">Play</button>
+				<button type="button" v-on:click="settings.score = !settings.score">Score</button>
+				<button type="button" v-on:click="settings.rules = !settings.rules">Rules</button>
+				<span class="nowrap padd">
+					<input type="checkbox" id="extendedCheckbox" :checked="extended" @change="extend">
+					<label for="extendedCheckbox">Extended Decktet</label>
+				</span>
+			</p>
+		</div>
+		<div class="wrapper big" v-if="settings.play">
+			<h2>Play</h2>
+			<div id="market">{{market}}</div>
+		</div>
+		<div class="wrapper big" v-if="settings.score">
+			<h2>Scoresheet</h2>
+			<table>
+				<tr>
+					<th class="unbordered"></th>
+					<th v-for="suit in suits" class="unbordered"><img v-bind:src="'css/' + suit.name + '.png'"/></th>
+					<th class="unbordered"></th>
+				</tr>
+				<tr>
+					<th>Suit</th>
+					<th v-for="suit in suits" class="capitalize">{{suit.name}}</th>
+					<th>Totals</th>
+				</tr>
+				<tr>
+					<th>Length</th>
+					<td v-for="suit in suits"><input type="number" min="0" max="11" v-model.number="suit.length" /></td>
+					<td>{{suitTotal}}</td>
+				</tr>
+				<tr>
+					<th>Ace</th>
+					<td v-for="suit in suits">
+						<input type="checkbox" id="ace" v-model="suit.ace" />
+					</td>
+					<td rowspan=2>{{acbTotal}}</td>
+				</tr>
+				<tr>
+					<th>Crown</th>
+					<td v-for="suit in suits">
+						<input type="checkbox" id="crown" v-model="suit.crown" />
+					</td>
+				</tr>
+				<tr>
+					<th>(Un)spent</th>
+					<td v-for="suit in suits"><input type="checkbox" v-model="suit.unspent"/></td>
+					<td>{{unspentTotal}}</td>
+				</tr>
+				<tr>
+					<th>Discards</th>
+					<td colspan="6"><input type="number" min="0" max="30" v-model.number="discards" /></td>
+					<td>{{discardTotal}}</td>
+				</tr>
+				<tr>
+					<th>Unfilled</th>
+					<td colspan="6"><input type="number" min="0" max="15" v-model.number="unfilled" /></td>
+					<td>{{unfilledTotal}}</td>
+				</tr>
+				<tr>
+					<td colspan="7" class="unbordered"></td>
+					<td><b>{{total}}</b></td>
+				</tr>
+			</table>
+		</div>
+		<div class="wrapper" v-if="settings.rules">
+			<div id="details">
+				<h2>Rules Cheatsheet</h2>
+				
+				<h3>Overview <button type="button" v-on:click="rules.setup = !rules.setup">{{rules.setup ? "-" : "+"}}</button></h3>
+				<div v-if="rules.setup">
+					<h4>Setup</h4>
+					<p>Aucteraden requires a single Decktet, four suit chips per Decktet suit, and either this scorekeeper or a way to keep score.  {{extended ? "" : "Remove the Excuse, Pawns, and Courts."}}  Take all the chips, and deal out three cards to form the market.</p>
+
+					<h4>Goals</h4>
+					
+					<p>The objective is to fill the tableau with sixteen cards that form the longest possible chains of orthogonally adjacent, increasing sequences of cards for each suit, preferably including Aces and/or Crowns, while neither spending all your chips of any suit or failing to spend at least one chip of each suit.  {{extended ? "Note that Pawns and Courts have a rank of zero (below Ace)." : ""}}</p>
+				</div>
+			</div>
+
+			<div id="turnOrder">
+				<h3>Turn Order</h3>
+				<ol>
+					<li><strong>Buy</strong> a card from the market.
+						<button type="button" v-on:click="rules.buy = !rules.buy">{{rules.buy ? "-" : "+"}}</button>
+						<p class="detail" v-if="rules.buy">The leftmost card costs two chips, the middle one chip, and the rightmost card is free.  {{ extended ? "Pawns and Courts cost one chip more than the market price." : "" }}  All chips paid must match a <b>single</b> suit of the card bought.  (That is, when paying more than one, they must all be the same color.)</p>
+						<p class="detail" v-if="rules.buy">If you are unable to place a card you must discard all of them for a 3 VP penalty. You may voluntarily discard all market cards for the same.</p>
+					</li>
+					<li><strong>Play</strong> to tableau.
+						<button type="button" v-on:click="rules.play = !rules.play">{{rules.play ? "-" : "+"}}</button>
+						<p class="detail" v-if="rules.play">The tableau may not grow beyond 4 cards in any direction.  Also Aces and Crowns may not be placed orthogonally adjacent, though they may be diagonally adjacent.  {{ extended ? "Similarly, Pawns and Courts may not be orthogonally adjacent." : "" }}</p>
+						<p class="detail" v-if="rules.play">To score victory points, ranks should be in order (allowing for holes):   {{ extended ? "Pawn/Court," : "" }} Ace, 2, 3, ..., 8, 9, Crown.</p>
+					</li>
+					<li><strong>Refill</strong> the market.
+						<button type="button" v-on:click="rules.refill = !rules.refill">{{rules.refill ? "-" : "+"}}</button>
+						<div class="detail" v-if="rules.refill">
+							<p>The Market should always contain three cards, unless the draw pile is exausted.</p>
+							<ol>
+								<li>Draw a new card.</li>
+								<li>{{ extended ? "If it is The Excuse, discard the entire market and The Excuse.  Otherwise, discard" : "Discard" }} any existing market cards that match any suits on the new card.   
+								</li>
+								<li>Fill in any market gaps by moving the cards to the right.</li>
+								<li>{{ extended ? "If it wasn't The Excuse, place" : "Place" }} the new card in the rightmost available space.</li>
+								<li>Fill in any remaining market gaps from the draw pile.  {{ extended ? "If you draw The Excuse, discard the entire market and The Excuse, and refill with three cards." : ""}}</li>
+							</ol>
+							<p>There is a <a href="https://boardgamegeek.com/article/19090213#19090213">rolling market variant</a> in which each drawn card is checked against the existing market, and the market cards possibly discarded, rather than only the first card {{ extended ? "and The Excuse" : "" }} forcing discards.</p>
+						</div>
+					</li>
+					<li><strong>Check</strong> the end game conditions.
+						<button type="button" v-on:click="rules.end = !rules.end">{{rules.end ? "-" : "+"}}</button>
+						<p class="detail" v-if="rules.end">If the tableau is full or the market is empty, the game is over.</p>
+					</li>
+				</ol>
+
+				<h3>Scoring <button type="button" v-on:click="rules.score = !rules.score">{{rules.score ? "-" : "+"}}</button></h3>
+				<div class="detail" v-if="rules.score">
+					<h4>Victory Points</h4>
+					<p>
+						Score one ascending chain per suit, according to the following table.
+					</p>
+					<table class="bordered">
+						<tbody>
+							<tr>
+								<th>Cards</th>
+								<td v-for="n in 7">{{scoreChart[n-1].count}}</td>
+								<td>7+</td>
+							</tr>
+							<tr>
+								<th>VP</th>
+								<td v-for="n in 8">{{scoreChart[n-1].vp}}</td>
+							</tr>
+						</tbody>
+					</table>
+					<p>
+						For each of the chains scored above, also score the following bonuses for including Aces and/or Crowns:
+					</p>
+					<ul>
+						<li><strong>Ace only</strong>: 1 VP</li>
+						<li><strong>Crown only</strong>: 2 VP</li>
+						<li><strong>Ace and Crown</strong>: 4 VP</li>
+					</ul>
+					<h4>Penalties</h4>
+					<ul>
+						<li><strong>-3 VP</strong> for each time you discarded the Market.</li>
+						<li><strong>-5 VP</strong> for each fully spent or fully unspent color of suit tokens.</li>
+						<li><strong>-5 VP</strong> for each hole in your tableau.</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+			<h2>Credits</h2>
+			<cite>The <a href="http://www.decktet.com">Decktet</a> is the creation of P.D. Magnus. Aucteraden is a solitaire Decktet game by Jack Neal; full rules are available at <a href="http://decktet.wikidot.com/game:aucteraden">the Decktet wiki</a>.</cite> 
+
+			<cite>This scoresheet and rules cheatsheet are by M. C. DeMarco; you may be interested in my other <a href="http://mcdemarco.net/games/decktet/">Decktet games</a>.</cite>
+			<cite>The suit images shown here are from cards released under a Creative Commons License by P.D. Magnus. The background texture is "Skulls" by Adam, from <a href="http://subtlepatterns.com/skulls/">Subtle Patterns</a>.</cite>
+		</div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
