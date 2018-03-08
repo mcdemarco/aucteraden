@@ -192,8 +192,12 @@ aucteraden.clearMarket = function(game) {
 
 aucteraden.discardMarket = function(game) {
 	//Like the Excuse refresh, but we need to log it for scoring.
-	game = aucteraden.clearMarket(game);
-	game.discards++;
+	if (game.deck.length == 0) {
+		game.message = "No more cards to draw.";
+	} else {
+		game = aucteraden.clearMarket(game);
+		game.discards++;
+	}
 	return game;
 };
 
@@ -414,7 +418,7 @@ variants.controller = function() {
 	};
 	
 	this.discard = function() {
-		this.game = aucteraden.discardMarket();
+		this.game = aucteraden.discardMarket(this.game);
 	};
 	
 	this.buy = function(row) {
@@ -440,7 +444,8 @@ variants.view = function(ctrl) {
 				]),
 				m("div", {className: "buttonWrapper"}, [
 					m("button[type=button]", {onclick: ctrl.reset.bind(ctrl)}, "Restart"),
-					m("button[type=button]", {onclick: modal.visible.bind(ctrl, true)}, "Rules")
+					m("button[type=button]", {onclick: modal.visible.bind(ctrl, true)}, "Rules"),
+					m("button[type=button]", {onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards + ")" : ""))
 				]),
 				m("div", {className: "versionWrapper"}, [
 					m("div", {className: "nowrapp"}, [
