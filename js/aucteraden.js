@@ -97,17 +97,24 @@ aucteraden.shuffle = function(deck) {
 	return shuffled;
 };
 
-aucteraden.drawMarket = function(game) {
-	switch (game.marketType) {
-	case "normal":
-		game = aucteraden.drawNormal(game);
-		break;
+aucteraden.drawMarket = function(game,initial) {
+	game.message = "";
+	if (initial) {
+		game = aucteraden.drawInitial(game);
+	} else {
+		switch (game.marketType) {
+			case "normal":
+			game = aucteraden.drawRollingOnce(game);
+			game = aucteraden.drawNormal(game);
+			game = aucteraden.drawNormal(game);
+			break;
 		
-	case "rolling":
-		game = aucteraden.drawRolling(game);
-		break;
+			case "rolling":
+			game = aucteraden.drawRollingRecursive(game);
+			break;
+		}
+		game = aucteraden.done(game);
 	}
-	game = aucteraden.done(game);
 	return game;
 };
 
@@ -116,13 +123,16 @@ aucteraden.Game = function() {
 		deck: aucteraden.shuffle(aucteraden.Deck()),
 		waste: [],
 		tableau: [],
-		foundation: [[]],
+		foundation: [],
 		reserve: [[],[],[],[]],
 		market: [],
 		marketType: m.route.param("market"),
-		message: ""
+		message: "",
+		over: false,
+		splayed: false,
+		tokens: [4,4,4,4,4,4]
 	};
-	game = aucteraden.drawMarket(game);
+	game = aucteraden.drawMarket(game,true);
 	return game;
 };
 
@@ -152,11 +162,11 @@ aucteraden.findOne = function (haystack, arr) {
 aucteraden.priceChecker = function(suitCard, price) {
 	//Can you afford it?
 	//var cardSuits = suitCard.suits();
-	console.log(suitCard);
+	//console.log(suitCard);
 	return true;
 };
 
-aucteraden.suitChecker = function(suitCard, row, aceReserve) {
+aucteraden.rankChecker = function(suitCard, row, aceReserve) {
 	//Degenerate case (adding to an empty foundation).
 	var aces = m.route.param("market") == "aces";
 	if (!aces && row.length == 0)
@@ -172,7 +182,6 @@ aucteraden.rows = function(cardArray) {
 	return m("div", {className: "foundationWrapper"},
 	         cardArray.map(function(subArray,idx) {
 		         return m("div", {className: "foundation"}, [
-			         m("img", {className: "card", src: "cards/blank.png"}),
 			         subArray.map(function(card,index) {
 				         return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em"});
 			         })
@@ -180,29 +189,71 @@ aucteraden.rows = function(cardArray) {
 	         }));
 };
 
-aucteraden.drawNormal = function(game) {
-	if (game.market.length < 3) {
-		//We shouldn't be here if it isn't, but who knows.
-	}
-
-	while (game.market.length < 3) {
+aucteraden.drawExcuse = function(game) {
+	//Should be checked by the caller but no harm in rechecking.
+	if (game.deck[game.deck.length-1].name() == 'the EXCUSE') {
 		var drawn = game.deck.pop();
-		if (drawn.name() == 'the EXCUSE') {
-			game.waste = game.waste.concat(game.market);
-			game.waste.push(drawn);
-			game.market = [];
-		} else 
-			game.market.push(drawn);
+		game.waste = game.waste.concat(game.market);
+		game.waste.push(drawn);
+		game.market = [];
+
+		game = aucteraden.drawInitial(game);
+		game.message = "Drew the EXCUSE and cleared the market.";
 	}
 	return game;
 };
 
-aucteraden.drawRolling = function(game) {
-	[0,1,2].map(function(val,idx) {
-		[0,1,2].map(function(val2,idx2) {
-			game.market[val].push(game.deck.pop());
-		});
-	});
+aucteraden.drawInitial = function(game) {
+	//Draw all three cards without suit checking.
+	//May still be an excuse, and may not actually be the initial draw.
+	game = aucteraden.drawNormal(game);
+	game = aucteraden.drawNormal(game);
+	game = aucteraden.drawNormal(game);
+	return game;
+}
+
+aucteraden.drawNormal = function(game) {
+	if (game.market.length < 3 && game.deck.length > 0) {
+		if (game.deck[game.deck.length-1].name() == 'the EXCUSE')
+			game = aucteraden.drawExcuse(game);
+		else {
+			var drawn = game.deck.pop();
+			game.market.push(drawn);
+			game.message = "Drew " + drawn.name() + ". ";
+		}
+	}
+	return game;
+};
+
+aucteraden.drawRollingOnce = function(game) {
+	//If once, we only draw with the roll once then shift to drawNormal.
+	if (game.market.length < 3 && game.deck.length > 0) {
+		if (game.deck[game.deck.length-1].name() == 'the EXCUSE') {
+			game = aucteraden.drawExcuse(game);
+		} else {
+			var drawn = game.deck.pop();
+			var suits = drawn.suits();
+			//Suit nuking removes matching cards from the market.
+			for (var idx = game.market.length; idx > 0; idx--) {
+				var cardObj = game.market[idx-1];
+				if (cardObj.hasOwnProperty("suits") && aucteraden.findOne(cardObj.suits(),suits)) {
+					//game.message += " Discarded " + cardObj.name() + ". ";
+					game.waste.push(game.market.splice(idx-1,1)[0]);
+					console.log("waste");
+					console.log(game.waste);
+				};
+			};
+			game.market.push(drawn);
+			game.message = "Drew " + drawn.name() + ". ";
+		}
+	}
+	return game;
+};
+
+aucteraden.drawRollingRecursive = function(game) {
+	while (game.market.length < 3 && game.deck.length > 0) {
+		game = aucteraden.drawRollingOnce(game);
+	}
 	return game;
 };
 
@@ -215,6 +266,9 @@ aucteraden.turn = function(game) {
 
 aucteraden.buy = function(game,price) {
 	//Buy a card from the market.
+	if (game.over)
+		return game;
+
 	var playCard = game.market[price];
 	if (aucteraden.priceChecker(playCard,price)) {
 		game.foundation.push(game.market.splice(price,1));
@@ -227,32 +281,8 @@ aucteraden.buy = function(game,price) {
 
 aucteraden.play = function(game) {
 	//Play the purchased card to the foundation.
-	var playCard = game.waste[game.waste.length - 1];
-	var found = aucteraden.nextFoundation(playCard,game.foundation);
-	var playRow = game.foundation[found];
-	var aceReserve = game.reserve[found];
-		if (aucteraden.suitChecker(playCard,playRow,aceReserve)) {
-			game.foundation[found].push(game.waste.pop());
-			game.message = "Played " + playCard.name() + " to row " + (found + 1) + ".";
-			game = aucteraden.done(game);
-		} else
-			game.message = "Suits do not match row " + (found + 1) + ".";
-	return game;
-};
-
-aucteraden.playReserve = function(game,row) {
-	//Play a card from the waste or reserve(s) to the appropriate foundation row.
-	if (game.reserve[row].length > 0) {
-		var playCard = game.reserve[row][game.reserve[row].length - 1];
-		var found = aucteraden.nextFoundation(playCard,game.foundation);
-		var playRow = game.foundation[found];
-		if (aucteraden.suitChecker(playCard,playRow)) {
-			game.foundation[found].push(game.reserve[row].pop());
-			game.message = "Played " + playCard.name() + " to row " + (found + 1) + ".";
-			game = aucteraden.done(game);
-		} else
-			game.message = "Suits do not match row " + (found + 1) + ".";
-	}
+	//game.message = "Played " + playCard.name() + " to row " + (found + 1) + ".";
+	game = aucteraden.done(game);
 	return game;
 };
 
@@ -265,8 +295,10 @@ aucteraden.done = function(game) {
 		gameOver = true;
 	else
 		gameOver = false;
-	if (gameOver)
+	if (gameOver) {
 		game.message = "Game over!";
+		game.over = gameOver;
+	}
 	return game;
 }
 
@@ -354,10 +386,6 @@ variants.controller = function() {
 		this.game = aucteraden.play(this.game);
 	};
 
-	this.playReserve = function(row) {
-		this.game = aucteraden.playReserve(this.game,row);
-	};
-
 };
 
 //view
@@ -406,11 +434,14 @@ variants.view = function(ctrl) {
 				m("div", {className: "deckWrapper"}, [
 					m("div", {className: "stock"}, [
 						m("h4","Stock (" + ctrl.game.deck.length + ")"),
-						m("img", {onclick: (ctrl.game.deck.length > 0 ? ctrl.turn.bind(ctrl) : ctrl.redeal.bind(ctrl)), className: "card", src: "cards/" + (ctrl.game.deck.length > 0 ? "back.png" : "blank.png")})
+						m("img", {className: "card", src: "cards/" + (ctrl.game.deck.length > 0 ? "back.png" : "blank.png")})
 					]),
 					m("div", {className: "waste"}, [
 						m("h4","Waste (" + ctrl.game.waste.length + ")"),
-						m("img", {className: "card", src: "cards/" + (ctrl.game.waste.length > 0 ? ctrl.game.waste[ctrl.game.waste.length - 1].image() : "blank.png"), onclick: ctrl.play.bind(ctrl)})
+						m("img", {className: "card", src: "cards/blank.png"}),
+						ctrl.game.waste.map(function(cardObj,index) {
+							return m("img", {className: "card", src: "cards/" + cardObj.image(), onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
+						})
 					])
 				]),
 				// Market.

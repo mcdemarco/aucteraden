@@ -42,14 +42,15 @@ body {
 }
 
 div.wrapper {
-    background-color: rgba(123,143,183,0.75); /* #7B8FB7 was #8E8EDA */
+    background-color: rgba(179,190,212,0.55); /*23,143,183,0.75); #7B8FB7 was #8E8EDA */
     padding: 3%;
     margin: 1% 10%;
     height:auto;
     border-radius:10px;
+    color: #003;
 }
-div.wrapper {
-/*    font-size: large;*/
+div.wrapper.big {
+    font-size: large;
     text-align:center;
 }
 
@@ -133,7 +134,11 @@ div.footer {
     text-align:center;
 }
 div.footer:last-child {
-    padding-bottom:1em;
+    padding:1em 0;
+}
+
+.scorer div.footer{
+    color: #003;
 }
 
 img {
@@ -333,7 +338,7 @@ img.card {
     width:124px;
     height:174px;
     border-radius:6px;
-    background-color: rgba(123,143,183,0.95);
+    background-color: rgba(179,190,212,0.15); /* rgba(123,143,183,0.95);*/
     border:thin solid #003;
     background-size:124px 174px;
     -webkit-user-select: none;
@@ -347,11 +352,16 @@ div.reserve, div.foundation {
     position: relative;
 }
 
+div.waste {
+    position: relative;
+    z-index: 5;
+}
+
 div.foundation {
     min-width: 300px;
 }
 
-.foundation img.card, .reserve img.card {
+.foundation img.card, .reserve img.card, .waste img.card {
     position:absolute;
 }
 
