@@ -80,7 +80,7 @@ aucteraden.Game = function() {
 		deck: aucteraden.shuffle(aucteraden.Deck()),
 		waste: [],
 		play: aucteraden.makeBlank(),
-		foundation: [[aucteraden.makeBlank()]],
+		foundation: aucteraden.makeFoundation(),
 		market: [],
 		marketType: m.route.param("market"),
 		message: "",
@@ -89,6 +89,7 @@ aucteraden.Game = function() {
 		discards: 0,
 		tokens: [4,4,4,4,4,4]
 	};
+	aucteraden.debug(game.foundation);
 	game = aucteraden.drawMarket(game,true);
 	return game;
 };
@@ -131,6 +132,14 @@ aucteraden.makeBlank = function() {
 		suits: [],
 		name: "blank",
 		image: "blank.png"
+	});
+};
+
+aucteraden.makeFoundation = function() {
+	return [0,1,2,3].map(function(idx) {
+		return [0,1,2,3].map(function(jdx) {
+			return aucteraden.makeBlank();
+		});
 	});
 };
 
