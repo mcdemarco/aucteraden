@@ -213,7 +213,7 @@ aucteraden.findOne = function (haystack, arr) {
 aucteraden.priceChecker = function(game, suitCard, price) {
 	//Can you afford it?
 	var cardSuits = suitCard.suits();
-	if (suitCard.rank() == "PAWN" || suitCard.rank() == "CROWN")
+	if (suitCard.rank() == "PAWN" || suitCard.rank() == "COURT")
 		price++;
 	if (price == 0)
 		return true;
@@ -373,7 +373,7 @@ aucteraden.drawRollingRecursive = function(game) {
 
 /* acquisitions */
 
-aucteraden.buy = function(game,price) {
+aucteraden.buy = function(game,row) {
 	//Buy a card from the market.
 	if (game.over)
 		return game;
@@ -382,34 +382,38 @@ aucteraden.buy = function(game,price) {
 		game.message = "Play previous card first.";
 		return game;
 	}
+	if (game.unpaid.price) {
+		game.message = "Pay for previous card first.";
+		return game;
+	}
 
-	var buyCard = game.market[price];
+	var buyCard = game.market[row];
 	aucteraden.debug("Trying to buy " + buyCard.name() + ".");
 
-	if (!aucteraden.priceChecker(game,buyCard,price)) {
+	if (!aucteraden.priceChecker(game,buyCard,row)) {
 		game.message = "You cannot afford that card.";
 	} else if (false) {
 		//Playability checker should go here.
 		game.message = "You cannot play that card.";
 	} else {
-		game.play = game.market.splice(price,1)[0];
+		game.play = game.market.splice(row,1)[0];
 		aucteraden.debug("Buying " + buyCard.name() + ".");
-		game = aucteraden.autopay(game,buyCard,price);
+		game.message = ("Buying " + buyCard.name() + ".");
+		game = aucteraden.autopay(game,buyCard,row);
 	} 
 	return game;
 };
 
-aucteraden.autopay = function(game,suitCard,price) {
-	var cardSuits = suitCard.suits();
-	if (suitCard.rank() == "PAWN" || suitCard.rank() == "CROWN")
+aucteraden.autopay = function(game,buyCard,row) {
+	var cardSuits = buyCard.suits();
+	var price = row;
+	if (buyCard.rank() == "PAWN" || buyCard.rank() == "COURT")
 		price++;
 	if (price == 0)
 		return game;
-	console.log(cardSuits);
 	var payableSuits = cardSuits.filter(function(suit) {
 		return game.tokens[suit] >= price;
 	});
-	console.log(payableSuits);
 	if (payableSuits.length == 1)
 		game.tokens[payableSuits[0]] -= price;
 	else 
@@ -417,15 +421,28 @@ aucteraden.autopay = function(game,suitCard,price) {
 	return game;
 };
 
+aucteraden.pay = function(game,suit) {
+	//Pay with a particular suit.
+	game.tokens[suit] -= game.unpaid.price;
+	aucteraden.debug("Paid " + game.unpaid.price + " " + suit + ".");
+	game.unpaid.suits = [];
+	game.unpaid.price = 0;
+	return game;
+};
+
 aucteraden.play = function(game,x,y) {
 	//Play the purchased card to the foundation.
-	game.foundation[x][y] = game.play;
-	aucteraden.debug("Played " + game.play.name() + " to the tableau.");
-	game.message = "Played " + game.play.name() + " to the tableau.";
-	game.play = aucteraden.makeBlank();
-	game = aucteraden.done(game);
-	//Rechecks for doneness.
-	game = aucteraden.drawMarket(game);
+	if (game.unpaid.price) {
+		game.message = "Pay for the card before playing it.";
+	} else {
+		game.foundation[x][y] = game.play;
+		aucteraden.debug("Played " + game.play.name() + " to the tableau.");
+		game.message = "Played " + game.play.name() + " to the tableau.";
+		game.play = aucteraden.makeBlank();
+		game = aucteraden.done(game);
+		//Rechecks for doneness.
+		game = aucteraden.drawMarket(game);
+	}
 	return game;
 };
 
@@ -538,6 +555,10 @@ variants.controller = function() {
 		this.game = aucteraden.buy(this.game,row);
 	};
 
+	this.pay = function(key) {
+		this.game = aucteraden.pay(this.game,key);
+	};
+
 	this.play = function(x,y) {
 		this.game = aucteraden.play(this.game,x,y);
 	};
@@ -614,7 +635,7 @@ variants.view = function(ctrl) {
 				m("div", {className: "marketWrapper"}, [
 					[2,1,0].map(function(row) {
 						return m("div", {className: "stock"}, [
-							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : ""))),
+							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && (ctrl.game.market[row].rank() == "PAWN" || ctrl.game.market[row].rank() == "COURT") ? " + 1" : "")),
 							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.game.market[row].image() : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
 						]);
 					})
@@ -625,7 +646,7 @@ variants.view = function(ctrl) {
 			// Tokens
 			m("div", {className: "tokenWrapper"}, [
 				Object.keys(ctrl.game.tokens).map(function(key) {
-					return m("div", {className: (ctrl.game.unpaid.suits.indexOf(key) > -1 ? "tokenSetPay" : "tokenSet")}, [
+					return m("div", {className: (ctrl.game.unpaid.suits.indexOf(key) > -1 ? "tokenSetPay" : "tokenSet"), onclick: ctrl.pay.bind(ctrl,key)}, [
 						[1,2,3,4].map(function(cnt) {
 							if (ctrl.game.tokens[key] >= cnt)
 								return m("div", {className: "tokenDiv"}, [
