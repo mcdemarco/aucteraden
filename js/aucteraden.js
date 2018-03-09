@@ -85,12 +85,14 @@ aucteraden.Game = function() {
 		marketType: m.route.param("market"),
 		message: "",
 		over: false,
+		score: 0,
 		splayed: false,
 		unpaid:  {suits: [], price: 0},
 		discards: 0,
 		tokens: {Moons: 4, Suns: 4, Knots: 4, Waves: 4, Leaves: 4, Wyrms: 4}
 	};
-	game = aucteraden.drawMarket(game,true);
+	game = aucteraden.score(game);
+	game = aucteraden.drawMarket(game);
 	return game;
 };
 
@@ -105,7 +107,7 @@ aucteraden.Rules = function() {
 	]);
 };
 
-aucteraden.Scores = function() {
+aucteraden.Scoring = function() {
 	return m("div", [
 		m("ul", [
 			m("li", "You score the longest run in each suit on a sliding scale from -5VP for fewer than 2 cards to 30VP for 7 or more cards."),
@@ -277,6 +279,7 @@ aucteraden.discardMarket = function(game) {
 	} else {
 		game = aucteraden.clearMarket(game);
 		game.discards++;
+		game = aucteraden.score(game);
 	}
 	return game;
 };
@@ -439,6 +442,8 @@ aucteraden.play = function(game,x,y) {
 		aucteraden.debug("Played " + game.play.name() + " to the tableau.");
 		game.message = "Played " + game.play.name() + " to the tableau.";
 		game.play = aucteraden.makeBlank();
+		//Score here.
+		game = aucteraden.score(game);
 		game = aucteraden.done(game);
 		//Rechecks for doneness.
 		game = aucteraden.drawMarket(game);
@@ -466,6 +471,34 @@ aucteraden.done = function(game) {
 	}
 	return game;
 };
+
+aucteraden.score = function(game) {
+	//The complex part of scoring is runs.
+	var score = aucteraden.scoreRunsAndBonuses(game.foundation);
+
+	//Subtract penalties.
+	var emptyTableauCount = game.foundation.reduce(function(acc,subarray) {
+		return acc + subarray.reduce(function (ac2,card) {
+			return ac2 + (card.name() == "blank" ? 1 : 0);
+		}, 0);
+	},0);
+	score -= 5 * emptyTableauCount;
+
+	var badTokenSuitCount = Object.keys(game.tokens).reduce(function(acc,key) {
+		return acc + (game.tokens[key] == 0 || game.tokens[key] == 4 ? 1 : 0);
+	},0);
+	score -= 5 * badTokenSuitCount;
+
+  score -= 3 * game.discards;
+
+	game.score = score;
+	return game;
+};
+
+aucteraden.scoreRunsAndBonuses = function(tableau) {
+	return 0;
+};
+
 
 //modal module
 var modal = {
@@ -502,7 +535,7 @@ variants.VersionList = function() {
 				aucteraden.Rules(),
 				m("p", " For this version (" + title + "), " + rules),
 				m("h2", "Scoring"),
-				aucteraden.Scores(),
+				aucteraden.Scoring(),
 				m("p", [
 					"For more detailed rules, see ", 
 					m("a", {href: "./"}, "the scoresheet"),
@@ -603,6 +636,9 @@ variants.view = function(ctrl) {
 							})
 						])
 					])
+				]),
+				m("div", {className: "message"}, [
+					m("h4", "Score: " + ctrl.game.score)
 				]),
 				m("div", {className: "buttonWrapper"}, [
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl)}, "Restart"),
