@@ -328,8 +328,9 @@ aucteraden.buy = function(game,price) {
 
 aucteraden.play = function(game,x,y) {
 	//Play the purchased card to the foundation.
-	//game.message = "Played " + playCard.name() + " to row " + (found + 1) + ".";
 	game.foundation[x][y] = game.play;
+	aucteraden.debug("Played " + game.play.name() + " to the tableau.");
+	game.message = "Played " + game.play.name() + " to the tableau.";
 	game.play = aucteraden.makeBlank();
 	game = aucteraden.done(game);
 	return game;
@@ -342,7 +343,10 @@ aucteraden.done = function(game) {
 	var gameOver;
 	if (game.market.length == 0)
 		gameOver = true;
-	else if (game.foundation.reduce(function(acc, cur) {return acc + cur.length;},0) == 16)
+	else if (game.foundation.reduce(function(acc, cur) {
+		return acc + cur.reduce(function(ac2,cu2) {
+			return ac2 + (cu2.name() == "blank" ? 0 : 1);},0);
+	},0) == 16)
 		gameOver = true;
 	else
 		gameOver = false;
