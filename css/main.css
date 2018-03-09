@@ -299,6 +299,12 @@ div.leftColumn {
     align-items:center;
     padding:1em;
 }
+
+.foundationWrapper,
+.foundation {
+    min-width: 536px;
+}
+
 .versionWrapper {
     -webkit-justify-content: space-between;
     justify-content: space-between;
@@ -326,16 +332,16 @@ div.stock h4, div.waste h4, div.play h4 {
 
 div.modal {
     position: fixed;
-    top: 15%;
+    top: 5%;
     right: 5%;
-    width:50%;
-    min-width:300px;
-    padding: 10px;
+    width:60%;
+    min-width:360px;
+    padding: 2em;
     border: 2px solid #003;
     border-radius: 12px;
     z-index: 3;
     box-shadow:0 1px 8px rgba(123,143,183,0.75);
-    background: linear-gradient(rgba(123,143,183,0.75), rgba(123,143,183,0.75)), url('../css/skulls.png');
+    background: linear-gradient(rgba(123,143,183,0.75), rgba(179,190,212,0.55)), url('../css/skulls.png');
     text-align:center;
 }
 
@@ -353,8 +359,8 @@ div.modal p {
 }
 
 
-div.message {
-    color: coral;
+.message {
+    color: orange;
 }
 
 div.versionWrapper p, p.description, footer.description {
@@ -407,8 +413,17 @@ div.waste {
     margin-top:-7px;
 }
 
-.tokenWrapper div.tokenSet {
-    margin-top:7px;
+.tokenWrapper div.tokenSet,
+.tokenWrapper div.tokenSetPay {
+    /*margin-top:7px;*/
+    padding: 10px 3px 3px 3px;
+}
+
+.tokenWrapper div.tokenSetPay {
+    border-radius: 6px;
+    border: 1px solid coral;
+    margin: 1px 0;
+    background-color: orange;
 }
 
 /* mobile */
@@ -426,6 +441,10 @@ p, input, textarea {
  user-select: text;
 }
 
-ol li {
+.rules ol li,
+.rules ul li,
+.rules p {
+    color: #003; 
     text-align:left;
 }
+
