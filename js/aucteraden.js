@@ -86,7 +86,7 @@ aucteraden.Game = function() {
 		message: "",
 		over: false,
 		splayed: false,
-		unpaid: {},
+		unpaid:  {suits: [], price: 0},
 		discards: 0,
 		tokens: {Moons: 4, Suns: 4, Knots: 4, Waves: 4, Leaves: 4, Wyrms: 4}
 	};
@@ -95,12 +95,24 @@ aucteraden.Game = function() {
 };
 
 aucteraden.Rules = function() {
-	return m("div", {className: "rules"}, [
+	return m("div", [
 		m("ol", [
 			m("li", "Buy a card from the market."),
 			m("li", "Play to the tableau."),
 			m("li", "The market refills."),
 			m("li", "Game over?")
+		])
+	]);
+};
+
+aucteraden.Scores = function() {
+	return m("div", [
+		m("ul", [
+			m("li", "You score the longest run in each suit on a sliding scale from -5VP for fewer than 2 cards to 30VP for 7 or more cards."),
+			m("li", "You score bonus points for having an Ace (1VP), Crown (2VP) or both (4VP) in each scoring run."),
+			m("li", "You are penalized 3VP each time you discard the market."),
+			m("li", "You are penalized 5VP for each hole remaining in your tableau."),
+			m("li", "You are penalized 5VP for each unspent or fully spent token suit (that is, for having either zero or four tokens remaning in a suit)."),
 		])
 	]);
 };
@@ -382,13 +394,12 @@ aucteraden.buy = function(game,price) {
 	} else {
 		game.play = game.market.splice(price,1)[0];
 		aucteraden.debug("Buying " + buyCard.name() + ".");
-		game = aucteraden.pay(game,buyCard,price);
-		game = aucteraden.drawMarket(game);
+		game = aucteraden.autopay(game,buyCard,price);
 	} 
 	return game;
 };
 
-aucteraden.pay = function(game,suitCard,price) {
+aucteraden.autopay = function(game,suitCard,price) {
 	var cardSuits = suitCard.suits();
 	if (suitCard.rank() == "PAWN" || suitCard.rank() == "CROWN")
 		price++;
@@ -413,6 +424,8 @@ aucteraden.play = function(game,x,y) {
 	game.message = "Played " + game.play.name() + " to the tableau.";
 	game.play = aucteraden.makeBlank();
 	game = aucteraden.done(game);
+	//Rechecks for doneness.
+	game = aucteraden.drawMarket(game);
 	return game;
 };
 
@@ -467,10 +480,17 @@ variants.VersionList = function() {
 			type: type,
 			title: title,
 			description: description,
-			rules: m("div", [
+			rules: m("div", {className: "rules"}, [
 				m("h2", "Turn Order"),
 				aucteraden.Rules(),
 				m("p", " For this version (" + title + "), " + rules),
+				m("h2", "Scoring"),
+				aucteraden.Scores(),
+				m("p", [
+					"For more detailed rules, see ", 
+					m("a", {href: "./"}, "the scoresheet"),
+					"."
+				]),
 				m("button[type=button]", {onclick: modal.visible.bind(this, false)}, "Close")
 			])
 		});
@@ -582,7 +602,7 @@ variants.view = function(ctrl) {
 						})
 					]),
 					m("div", {className: "play"}, [
-						m("h4","Play"),
+						m("h4", {className: ctrl.game.unpaid.price ? "message" : ""}, (ctrl.game.unpaid.price ? "Pay " + ctrl.game.unpaid.price : "Play")),
 						m("img", {className: "card", src: "cards/" + ctrl.game.play.image(), onclick: ctrl.play.bind(ctrl)})
 					])
 				]),
@@ -605,12 +625,14 @@ variants.view = function(ctrl) {
 			// Tokens
 			m("div", {className: "tokenWrapper"}, [
 				Object.keys(ctrl.game.tokens).map(function(key) {
-					return m("div", {className: "tokenSet"}, [
+					return m("div", {className: (ctrl.game.unpaid.suits.indexOf(key) > -1 ? "tokenSetPay" : "tokenSet")}, [
 						[1,2,3,4].map(function(cnt) {
 							if (ctrl.game.tokens[key] >= cnt)
-								return m("div", [
+								return m("div", {className: "tokenDiv"}, [
 									m("img", {className: "token", src: "css/" + key.toLowerCase() + ".png"})
 								]);
+							else
+								return m("div");
 						})
 					]);
 				})
