@@ -87,7 +87,8 @@ aucteraden.Game = function() {
 		over: false,
 		splayed: false,
 		discards: 0,
-		tokens: [4,4,4,4,4,4]
+		tokens: [4,4,4,4,4,4],
+		tokenSuits: ["moons","suns","knots","waves","leaves","wyrms"]
 	};
 	game = aucteraden.drawMarket(game,true);
 	return game;
@@ -215,7 +216,7 @@ aucteraden.rankChecker = function(suitCard, row) {
 	return aucteraden.findOne(cardSuits, rowSuits);
 };
 
-//row template
+//foundation template
 aucteraden.viewFoundation = function(ctrl) {
 	var cardArray = ctrl.game.foundation;
 	//aucteraden.debug(cardArray);
@@ -238,6 +239,8 @@ aucteraden.viewFoundation = function(ctrl) {
 	  })
 	]);
 };
+
+
 
 /* market refill is complicated */
 
@@ -537,9 +540,6 @@ variants.view = function(ctrl) {
 					m("button[type=button]", {className: "mainButton", onclick: modal.visible.bind(ctrl, true)}, "Rules"),
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards + ")" : ""))
 				]),
-				m("div", {className: "roundWrapper"}, [
-					m("div", {className: "message"}, ctrl.game.message)
-				]),
 				// Stock and waste.
 				m("div", {className: "deckWrapper"}, [
 					m("div", {className: "stock"}, [
@@ -558,6 +558,10 @@ variants.view = function(ctrl) {
 						m("img", {className: "card", src: "cards/" + ctrl.game.play.image(), onclick: ctrl.play.bind(ctrl)})
 					])
 				]),
+				//Messages
+				m("div", {className: "roundWrapper"}, [
+					m("div", {className: "message"}, ctrl.game.message)
+				]),
 				// Market.
 				m("div", {className: "marketWrapper"}, [
 					[2,1,0].map(function(row) {
@@ -570,8 +574,21 @@ variants.view = function(ctrl) {
 				m("p", {className: "description"}, "code by M. C. DeMarco")
 			]),
 
-			// Foundation
+			// Tokens
+			m("div", {className: "tokenWrapper"}, [
+				ctrl.game.tokenSuits.map(function(suit,idx) {
+					return m("div", {className: "tokenSet"}, [
+						[1,2,3,4].map(function(cnt) {
+							if (ctrl.game.tokens[idx] >= cnt) 
+								return m("div", [
+									m("img", {className: "token", src: "css/" + suit + ".png"})
+								]);
+						})
+					]);
+				})
+			]),
 
+			// Foundation
 			aucteraden.viewFoundation(ctrl)
 		]),
 		modal.view(function() {
