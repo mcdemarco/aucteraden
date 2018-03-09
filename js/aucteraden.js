@@ -89,7 +89,6 @@ aucteraden.Game = function() {
 		discards: 0,
 		tokens: [4,4,4,4,4,4]
 	};
-	aucteraden.debug(game.foundation);
 	game = aucteraden.drawMarket(game,true);
 	return game;
 };
@@ -143,6 +142,52 @@ aucteraden.makeFoundation = function() {
 	});
 };
 
+aucteraden.shiftFoundation = function(game,direction) {
+	var sayNo = "..can't expand in that direction.";
+	game.message = "Shifting tableau.";
+	aucteraden.debug("Shift " + direction);
+	switch(direction) {
+
+		case "top":
+		//If the last row is blanks, we can move it to the first row.
+		if (game.foundation[3].reduce(function(acc,card) {return (acc && card.name() == "blank");}, true))
+			game.foundation.unshift(game.foundation.pop());
+		else
+			game.message += sayNo;
+		break;
+
+		case "bottom":
+		//If the top row is blanks, we can move it to the last row.
+		if (game.foundation[0].reduce(function(acc,card) {return (acc && card.name() == "blank");}, true))
+			game.foundation.push(game.foundation.shift());
+		else
+			game.message += sayNo;
+		break;
+
+		case "left":
+		//If every last card is blank, we can move them all to first place.
+		if (game.foundation.reduce(function(acc,subarray) {return (acc && subarray[3].name() == "blank");}, true))
+			game.foundation.forEach(function(subarray,idx) {
+				game.foundation[idx].unshift(game.foundation[idx].pop());
+			});
+		else
+			game.message += sayNo;
+		break;
+
+		case "right":
+		//If every first card is blank, we can move them all to last place.
+		if (game.foundation.reduce(function(acc,subarray) {return (acc && subarray[0].name() == "blank");}, true))
+			game.foundation.forEach(function(subarray,idx) {
+				game.foundation[idx].push(game.foundation[idx].shift());
+			});
+		else
+			game.message += sayNo;
+		break;
+	};
+
+	return game;
+};
+
 /* suit and price checking */
 
 aucteraden.findOne = function (haystack, arr) {
@@ -173,21 +218,25 @@ aucteraden.rankChecker = function(suitCard, row) {
 //row template
 aucteraden.viewFoundation = function(ctrl) {
 	var cardArray = ctrl.game.foundation;
-	aucteraden.debug(cardArray);
-	return m("div", {className: "foundationWrapper"},
-	         cardArray.map(function(subArray,idx) {
-						 if (subArray.length > 0) {
-							 return m("div", {className: "foundation"}, [
-								 subArray.map(function(card,index) {
-									 return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em", onclick: ctrl.play.bind(ctrl,idx,index)});
-								 })
-							 ]);
-						 } else {
-							 return m("div", {className: "foundation"}, [
-								 m("img", {className: "card", src: "cards/blank.png", style: "left: 1em"})
-							 ]);
-						 }
-	         }));
+	//aucteraden.debug(cardArray);
+	return m("div", {className: "foundationWrapper"}, [
+		["right","left","bottom","top"].map(function(dir) {
+			return m("button[type=button]", {className: "arrow", style: dir + ":0;", onclick: ctrl.shift.bind(ctrl,dir)}, "+");
+		}),
+	  cardArray.map(function(subArray,idx) {
+			if (subArray.length > 0) {
+				return m("div", {className: "foundation"}, [
+					subArray.map(function(card,index) {
+						return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em", onclick: ctrl.play.bind(ctrl,idx,index)});
+					})
+				]);
+			} else {
+				return m("div", {className: "foundation"}, [
+					m("img", {className: "card", src: "cards/blank.png", style: "left: 1em"})
+				]);
+			}
+	  })
+	]);
 };
 
 /* market refill is complicated */
@@ -442,6 +491,10 @@ variants.controller = function() {
 		this.game = aucteraden.play(this.game,x,y);
 	};
 
+	this.shift = function(direction) {
+		this.game = aucteraden.shiftFoundation(this.game,direction);
+	};
+
 };
 
 //view
@@ -454,11 +507,6 @@ variants.view = function(ctrl) {
 				m("header", [
 					m("h1", "Aucteraden"),
 					m("p", {className: "description"}, "a solitaire card game for the Decktet by Jack Neal")
-				]),
-				m("div", {className: "buttonWrapper"}, [
-					m("button[type=button]", {onclick: ctrl.reset.bind(ctrl)}, "Restart"),
-					m("button[type=button]", {onclick: modal.visible.bind(ctrl, true)}, "Rules"),
-					m("button[type=button]", {onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards + ")" : ""))
 				]),
 				m("div", {className: "versionWrapper"}, [
 					m("div", {className: "nowrapp"}, [
@@ -483,6 +531,11 @@ variants.view = function(ctrl) {
 							})
 						])
 					])
+				]),
+				m("div", {className: "buttonWrapper"}, [
+					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl)}, "Restart"),
+					m("button[type=button]", {className: "mainButton", onclick: modal.visible.bind(ctrl, true)}, "Rules"),
+					m("button[type=button]", {className: "mainButton", onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards + ")" : ""))
 				]),
 				m("div", {className: "roundWrapper"}, [
 					m("div", {className: "message"}, ctrl.game.message)
@@ -513,10 +566,12 @@ variants.view = function(ctrl) {
 							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.game.market[row].image() : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
 						]);
 					})
-				])
+				]),
+				m("p", {className: "description"}, "code by M. C. DeMarco")
 			]),
 
 			// Foundation
+
 			aucteraden.viewFoundation(ctrl)
 		]),
 		modal.view(function() {

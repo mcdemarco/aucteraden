@@ -19,6 +19,8 @@ html, body, div.bodyWrapper {
 body, div.bodyWrapper {
     height: 100vh;
     margin: 1em;
+    min-height:680px;
+    overflow:auto;
 }
 
 /* an unfortunate mithril necessity */
@@ -76,17 +78,22 @@ button {
     font-family: 'Fortune Letters', Futura, Geneva, sans-serif;
     font-weight:bold;
     font-size: medium;
-    padding: 3px 2px;
-    margin:5px;
-}
-
-button.mainButton {
+    padding: 3px 4px;
     margin: 5px;
-    padding: 4px 6px;
-    font-size: medium;
+}
+button.mainButton, button.arrow {
     border-radius: 6px;
     background-color: white;
+}
+button.mainButton {
     font-weight:normal;
+}
+button.arrow {
+    position:absolute;
+    border-radius:50%;
+    padding: 4px 6px;
+    width:auto;
+    margin:0 auto;
 }
 
 span.bigger {
@@ -237,7 +244,8 @@ div.leftColumn {
     -webkit-box-pack: justify;
     -webkit-justify-content: space-between;
     justify-content: space-between;
-    height: 650px;
+    min-height:660px;
+    margin-right:1em;
 }
 
 .reserveWrapper {
@@ -263,11 +271,15 @@ div.leftColumn {
 }
 
 .foundationWrapper {
-    min-height: 600px;
-    min-width: 500px;
-    -webkit-justify-content: start;
-    justify-content: start;
-    margin-left:1em;
+    min-height: 660px;
+    min-width: 536px;
+    position:absolute;
+    top:0;
+    left:450px;
+    -webkit-justify-content: center;
+    justify-content: center;
+    align-items:center;
+    padding:1em;
 }
 .versionWrapper {
     -webkit-justify-content: space-between;
@@ -327,6 +339,10 @@ div.message {
 div.versionWrapper p, p.description {
     font-style:italic;
     font-size:smaller;
+}
+
+p.description {
+    text-align:center;
 }
 
 /* cards */
