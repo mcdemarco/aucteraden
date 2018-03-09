@@ -86,9 +86,9 @@ aucteraden.Game = function() {
 		message: "",
 		over: false,
 		splayed: false,
+		unpaid: {},
 		discards: 0,
-		tokens: [4,4,4,4,4,4],
-		tokenSuits: ["moons","suns","knots","waves","leaves","wyrms"]
+		tokens: {Moons: 4, Suns: 4, Knots: 4, Waves: 4, Leaves: 4, Wyrms: 4}
 	};
 	game = aucteraden.drawMarket(game,true);
 	return game;
@@ -198,11 +198,18 @@ aucteraden.findOne = function (haystack, arr) {
 	});
 };
 
-aucteraden.priceChecker = function(suitCard, price) {
+aucteraden.priceChecker = function(game, suitCard, price) {
 	//Can you afford it?
-	//var cardSuits = suitCard.suits();
-	//aucteraden.debug(suitCard);
-	return true;
+	var cardSuits = suitCard.suits();
+	if (suitCard.rank() == "PAWN" || suitCard.rank() == "CROWN")
+		price++;
+	if (price == 0)
+		return true;
+	for (var s = 0; s < cardSuits.length; s++) {
+		if (game.tokens[cardSuits[s]] >= price)
+			return true;
+	}
+	return false;
 };
 
 aucteraden.rankChecker = function(suitCard, row) {
@@ -228,7 +235,7 @@ aucteraden.viewFoundation = function(ctrl) {
 			if (subArray.length > 0) {
 				return m("div", {className: "foundation"}, [
 					subArray.map(function(card,index) {
-						return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em", onclick: ctrl.play.bind(ctrl,idx,index)});
+						return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em", onclick: card.name() == "blank" ? ctrl.play.bind(ctrl,idx,index) : ""});
 					})
 				]);
 			} else {
@@ -364,17 +371,38 @@ aucteraden.buy = function(game,price) {
 		return game;
 	}
 
-	var playCard = game.market[price];
-	aucteraden.debug("Trying to buy " + playCard.name() + ".");
+	var buyCard = game.market[price];
+	aucteraden.debug("Trying to buy " + buyCard.name() + ".");
 
-	if (!aucteraden.priceChecker(playCard,price)) {
+	if (!aucteraden.priceChecker(game,buyCard,price)) {
 		game.message = "You cannot afford that card.";
-	} else {
+	} else if (false) {
 		//Playability checker should go here.
+		game.message = "You cannot play that card.";
+	} else {
 		game.play = game.market.splice(price,1)[0];
-		aucteraden.debug("Playing " + playCard.name() + ".");
+		aucteraden.debug("Buying " + buyCard.name() + ".");
+		game = aucteraden.pay(game,buyCard,price);
 		game = aucteraden.drawMarket(game);
 	} 
+	return game;
+};
+
+aucteraden.pay = function(game,suitCard,price) {
+	var cardSuits = suitCard.suits();
+	if (suitCard.rank() == "PAWN" || suitCard.rank() == "CROWN")
+		price++;
+	if (price == 0)
+		return game;
+	console.log(cardSuits);
+	var payableSuits = cardSuits.filter(function(suit) {
+		return game.tokens[suit] >= price;
+	});
+	console.log(payableSuits);
+	if (payableSuits.length == 1)
+		game.tokens[payableSuits[0]] -= price;
+	else 
+		game.unpaid = {suits: payableSuits, price: price};
 	return game;
 };
 
@@ -576,12 +604,12 @@ variants.view = function(ctrl) {
 
 			// Tokens
 			m("div", {className: "tokenWrapper"}, [
-				ctrl.game.tokenSuits.map(function(suit,idx) {
+				Object.keys(ctrl.game.tokens).map(function(key) {
 					return m("div", {className: "tokenSet"}, [
 						[1,2,3,4].map(function(cnt) {
-							if (ctrl.game.tokens[idx] >= cnt) 
+							if (ctrl.game.tokens[key] >= cnt)
 								return m("div", [
-									m("img", {className: "token", src: "css/" + suit + ".png"})
+									m("img", {className: "token", src: "css/" + key.toLowerCase() + ".png"})
 								]);
 						})
 					]);
