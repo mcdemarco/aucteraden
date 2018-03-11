@@ -35,13 +35,17 @@ div.bodyWrapper {
 
 @font-face {
     font-family: "Fortune Letters";
-    src: url(../css/fortune-letters.ttf) format("truetype");
+    src: url("../css/fortune-letters.ttf") format("truetype");
 }
 
 body {
     background-image: url('../css/skulls.png');
     font-family: 'Segoe UI', 'Century Gothic', 'Lucida Grande', Tahoma, 'Gill Sans', sans-serif;
     color:#eeeeff;
+}
+
+span.legible {
+    font-family: 'Segoe UI', 'Century Gothic', 'Lucida Grande', Tahoma, 'Gill Sans', sans-serif;
 }
 
 div.wrapper {
@@ -263,11 +267,11 @@ div.leftColumn {
 }
 
 
-.buttonWrapper, .versionWrapper, .deckWrapper, .roundWrapper, .marketWrapper, .tokenWrapper, .foundationWrapper {
+.buttonWrapper, .versionWrapper, .deckWrapper, .roundWrapper, .marketWrapper, .tokenWrapper, .foundationWrapper, .scoreWrapper {
     display: -webkit-flex;
     display: flex;
 }
-.roundWrapper, .foundationWrapper, .tokenWrapper {
+.roundWrapper, .foundationWrapper, .tokenWrapper, .scoreWrapper {
     -webkit-flex-direction: column;
     flex-direction: column;
 }
@@ -277,9 +281,9 @@ div.leftColumn {
     flex-direction: row;
 }
 
-/* .tokenWrapper is the skinny column */
+/* .tokenWrapper & co are the skinny columns */
 
-.tokenWrapper {
+.tokenWrapper, .scoreWrapper {
     margin: 1em;
     justify-content: center;
     align-items:center;
@@ -335,7 +339,7 @@ div.modal {
     top: 5%;
     right: 5%;
     width:60%;
-    min-width:360px;
+    min-width:600px;
     padding: 2em;
     border: 2px solid #003;
     border-radius: 12px;
@@ -343,6 +347,8 @@ div.modal {
     box-shadow:0 1px 8px rgba(123,143,183,0.75);
     background: linear-gradient(rgba(123,143,183,0.75), rgba(179,190,212,0.55)), url('../css/skulls.png');
     text-align:center;
+    max-height: 650px;
+    overflow:auto;
 }
 
 div.modal p {
@@ -447,4 +453,15 @@ p, input, textarea {
     color: #003; 
     text-align:left;
 }
+.rules {
+    font-size: 14px;
+}
 
+/* runs display */
+div.score {
+    font-weight:bold;
+}
+div.scoreDiv {
+    text-align:center;
+    margin: 0.5em 0 0 0;
+}

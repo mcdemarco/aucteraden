@@ -33,6 +33,9 @@ var app = new Vue({
 		extended: function () {
 			return this.settings.extended;
 		},
+		playURL: function () {
+			return "./aucteraden.html" + (this.settings.extended ? "#normal/extended" : "");
+		},
 		acbTotal: function () {
 					var total = 0;
 					Object.entries(this.suits).forEach(([key, val]) => {
