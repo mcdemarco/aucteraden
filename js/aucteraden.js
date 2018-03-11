@@ -140,9 +140,13 @@ aucteraden.shuffle = function(deck) {
 	return shuffled;
 };
 
+aucteraden.isBlank = function(card) {
+	return card.name() == "blank";
+};
+
 aucteraden.makeBlank = function() {
 	return new aucteraden.Card({
-		rank: -1,
+		rank: "BLANK",
 		suits: [],
 		name: "blank",
 		image: "blank.png"
@@ -165,7 +169,7 @@ aucteraden.shiftFoundation = function(game,direction) {
 
 		case "top":
 		//If the last row is blanks, we can move it to the first row.
-		if (game.foundation[3].reduce(function(acc,card) {return (acc && card.name() == "blank");}, true))
+		if (game.foundation[3].reduce(function(acc,card) {return (acc && aucteraden.isBlank(card));}, true))
 			game.foundation.unshift(game.foundation.pop());
 		else
 			game.message += sayNo;
@@ -173,7 +177,7 @@ aucteraden.shiftFoundation = function(game,direction) {
 
 		case "bottom":
 		//If the top row is blanks, we can move it to the last row.
-		if (game.foundation[0].reduce(function(acc,card) {return (acc && card.name() == "blank");}, true))
+		if (game.foundation[0].reduce(function(acc,card) {return (acc && aucteraden.isBlank(card));}, true))
 			game.foundation.push(game.foundation.shift());
 		else
 			game.message += sayNo;
@@ -181,7 +185,7 @@ aucteraden.shiftFoundation = function(game,direction) {
 
 		case "left":
 		//If every last card is blank, we can move them all to first place.
-		if (game.foundation.reduce(function(acc,subarray) {return (acc && subarray[3].name() == "blank");}, true))
+		if (game.foundation.reduce(function(acc,subarray) {return (acc && aucteraden.isBlank(subarray[3]));}, true))
 			game.foundation.forEach(function(subarray,idx) {
 				game.foundation[idx].unshift(game.foundation[idx].pop());
 			});
@@ -191,7 +195,7 @@ aucteraden.shiftFoundation = function(game,direction) {
 
 		case "right":
 		//If every first card is blank, we can move them all to last place.
-		if (game.foundation.reduce(function(acc,subarray) {return (acc && subarray[0].name() == "blank");}, true))
+		if (game.foundation.reduce(function(acc,subarray) {return (acc && aucteraden.isBlank(subarray[0]));}, true))
 			game.foundation.forEach(function(subarray,idx) {
 				game.foundation[idx].push(game.foundation[idx].shift());
 			});
@@ -203,6 +207,68 @@ aucteraden.shiftFoundation = function(game,direction) {
 	return game;
 };
 
+aucteraden.ranksCanNeighbor = function(rank1,rank2) {
+	//If either is not a special card, they can neighbor.
+	if (["Ace","CROWN","PAWN","COURT"].indexOf(rank1) < 0)
+		return true;
+	else if (["Ace","CROWN","PAWN","COURT"].indexOf(rank2) < 0)
+		return true;
+	else if (rank1 == rank2) //Same special card not good.
+		return false;
+	else if (["PAWN","COURT"].indexOf(rank1) > -1 && ["PAWN","COURT"].indexOf(rank2) > -1)
+		return false;
+	else if (["Ace","CROWN"].indexOf(rank1) > -1 && ["Ace","CROWN"].indexOf(rank2) > -1)
+		return false;
+	else
+		return true;
+};
+
+
+/* tableau helper functions */
+
+aucteraden.findNeighbors = function(tableau,r,c) {
+	console.log(r);
+	console.log(c);
+	//Returns all neighbors, real or blank.
+	var neighborArray = [];
+	var theCard;
+	[-1,1].forEach(function(val) {
+		if (r + val >= 0 && r + val <= 3) {
+			theCard = tableau[r+val][c];
+			neighborArray.push(theCard);
+		}
+		if (c + val >= 0 && c + val <= 3) {
+			theCard = tableau[r][c+val];
+			neighborArray.push(theCard);
+		}
+	});
+
+	return neighborArray;
+};
+
+aucteraden.legalNeighbors = function(tableau,r,c,newRank) {
+	//Return true if a card of newRank can neighbor everything orthog to the given row,column in tableau.
+	//Used in positionChecker to test all positions, and when playing a card to test a single position.
+
+	//For degenerate values of newRank, return true.
+	if (["Ace","CROWN","PAWN","COURT"].indexOf(newRank) < 0)
+		return true;
+
+	console.log("in legalNeighbors with newRank " + newRank + " at row " + r + ", column " + c);
+
+	var neighborArray = aucteraden.findNeighbors(tableau,r,c);
+
+	//Accumulates truth until we hit a false.
+  var isLegal = neighborArray.reduce(function(acc,neighborCard) {
+		console.log("in accumulator comparing " + newRank + " to " + neighborCard.rank());
+		var neighborly = aucteraden.ranksCanNeighbor(neighborCard.rank(),newRank);
+		console.log(neighborly);
+		return (acc && neighborly);
+	},true);
+	console.log("legal? " + isLegal);
+	return isLegal;
+};
+
 /* suit and price checking */
 
 aucteraden.findOne = function (haystack, arr) {
@@ -212,7 +278,27 @@ aucteraden.findOne = function (haystack, arr) {
 	});
 };
 
-aucteraden.priceChecker = function(game, suitCard, price) {
+aucteraden.positionChecker = function(tableau, newRank) {
+	//Can you play it?  There's at least one blank space, but...
+
+	//If the rank is innocent, just return true.
+	if (["Ace","CROWN","PAWN","COURT"].indexOf(newRank) < 0)
+		return true;
+
+	//Check each spot in the tableau until we find one that is legal.
+	for (var idr = 0; idr < 4; idr++) {
+		for (var idc = 0; idc < 4; idc++) {
+			var candidateSpot = tableau[idr][idc];
+			if (aucteraden.isBlank(candidateSpot) && aucteraden.legalNeighbors(tableau,idr,idc,newRank))
+				return true;
+		};
+	};
+
+	//Didn't find a legal placement.
+	return false;
+};
+
+aucteraden.priceChecker = function(tokens, suitCard, price) {
 	//Can you afford it?
 	var cardSuits = suitCard.suits();
 	if (suitCard.rank() == "PAWN" || suitCard.rank() == "COURT")
@@ -220,7 +306,7 @@ aucteraden.priceChecker = function(game, suitCard, price) {
 	if (price == 0)
 		return true;
 	for (var s = 0; s < cardSuits.length; s++) {
-		if (game.tokens[cardSuits[s]] >= price)
+		if (tokens[cardSuits[s]] >= price)
 			return true;
 	}
 	return false;
@@ -239,20 +325,20 @@ aucteraden.rankChecker = function(suitCard, row) {
 
 //foundation template
 aucteraden.viewFoundation = function(ctrl) {
-	var cardArray = ctrl.game.foundation;
-	//aucteraden.debug(cardArray);
+	var tableauArray = ctrl.game.foundation;
 	return m("div", {className: "foundationWrapper"}, [
 		["right","left","bottom","top"].map(function(dir) {
 			return m("button[type=button]", {className: "arrow", style: dir + ":0;", onclick: ctrl.shift.bind(ctrl,dir)}, "+");
 		}),
-	  cardArray.map(function(subArray,idx) {
-			if (subArray.length > 0) {
+	  tableauArray.map(function(currRowArray,idr) {
+			if (currRowArray.length > 0) {
 				return m("div", {className: "foundation"}, [
-					subArray.map(function(card,index) {
-						return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em", onclick: card.name() == "blank" ? ctrl.play.bind(ctrl,idx,index) : ""});
+					currRowArray.map(function(card,idc) {
+						return m("img", {className: "card", src: "cards/" + card.image(), style: "left: 1em", onclick: aucteraden.isBlank(card) ? ctrl.play.bind(ctrl,idr,idc) : ""});
 					})
 				]);
 			} else {
+				//This case no longer occurs.
 				return m("div", {className: "foundation"}, [
 					m("img", {className: "card", src: "cards/blank.png", style: "left: 1em"})
 				]);
@@ -393,10 +479,9 @@ aucteraden.buy = function(game,row) {
 	var buyCard = game.market[row];
 	aucteraden.debug("Trying to buy " + buyCard.name() + ".");
 
-	if (!aucteraden.priceChecker(game,buyCard,row)) {
+	if (!aucteraden.priceChecker(game.tokens,buyCard,row)) {
 		game.message = "You cannot afford that card.";
-	} else if (false) {
-		//Playability checker should go here.
+	} else if (!aucteraden.positionChecker(game.foundation,buyCard.rank())) {
 		game.message = "You cannot play that card.";
 	} else {
 		game.play = game.market.splice(row,1)[0];
@@ -433,12 +518,17 @@ aucteraden.pay = function(game,suit) {
 	return game;
 };
 
-aucteraden.play = function(game,x,y) {
+aucteraden.play = function(game,r,c) {
 	//Play the purchased card to the foundation.
 	if (game.unpaid.price) {
 		game.message = "Pay for the card before playing it.";
+	} else if (!aucteraden.legalNeighbors(game.foundation,r,c,game.play.rank())) {
+		//Neighbor checking explicit position.
+		//There is at least one a legal placement for this card, 
+		//but no guarantee the user picked it.
+		game.message = "That placement is not allowed.";
 	} else {
-		game.foundation[x][y] = game.play;
+		game.foundation[r][c] = game.play;
 		aucteraden.debug("Played " + game.play.name() + " to the tableau.");
 		game.message = "Played " + game.play.name() + " to the tableau.";
 		game.play = aucteraden.makeBlank();
@@ -460,7 +550,7 @@ aucteraden.done = function(game) {
 		gameOver = true;
 	else if (game.foundation.reduce(function(acc, cur) {
 		return acc + cur.reduce(function(ac2,cu2) {
-			return ac2 + (cu2.name() == "blank" ? 0 : 1);},0);
+			return ac2 + (aucteraden.isBlank(cu2) ? 0 : 1);},0);
 	},0) == 16)
 		gameOver = true;
 	else
@@ -479,7 +569,7 @@ aucteraden.score = function(game) {
 	//Subtract penalties.
 	var emptyTableauCount = game.foundation.reduce(function(acc,subarray) {
 		return acc + subarray.reduce(function (ac2,card) {
-			return ac2 + (card.name() == "blank" ? 1 : 0);
+			return ac2 + (aucteraden.isBlank(card) ? 1 : 0);
 		}, 0);
 	},0);
 	score -= 5 * emptyTableauCount;
@@ -592,8 +682,8 @@ variants.controller = function() {
 		this.game = aucteraden.pay(this.game,key);
 	};
 
-	this.play = function(x,y) {
-		this.game = aucteraden.play(this.game,x,y);
+	this.play = function(r,c) {
+		this.game = aucteraden.play(this.game,r,c);
 	};
 
 	this.shift = function(direction) {
@@ -660,7 +750,7 @@ variants.view = function(ctrl) {
 					]),
 					m("div", {className: "play"}, [
 						m("h4", {className: ctrl.game.unpaid.price ? "message" : ""}, (ctrl.game.unpaid.price ? "Pay " + ctrl.game.unpaid.price : "Play")),
-						m("img", {className: "card", src: "cards/" + ctrl.game.play.image(), onclick: ctrl.play.bind(ctrl)})
+						m("img", {className: "card", src: "cards/" + ctrl.game.play.image()})
 					])
 				]),
 				//Messages
