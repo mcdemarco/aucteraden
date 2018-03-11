@@ -101,7 +101,7 @@ aucteraden.Rules = function() {
 	return m("div", [
 		m("ol", [
 			m("li", "Buy a card from the market by clicking on it.  When you have a choice of payment, the options will be highlighted; click one to pay.  If you cannot afford, can't place, or don't like the market cards, click Discard Market to draw more."),
-			m("li", "Play your purchased card by clicking on an empty tableau spot.  Use the + buttons to shift the tableau if necessary."),
+			m("li", "Play your purchased card by clicking on an empty tableau spot.  Use the + buttons to shift the tableau if necessary.  Aces and Crowns may not be adjacent, nor may Pawns and Courts."),
 			m("li", "The market refills automatically.  Some cards may be discarded when refilling; click on the Waste pile to see all discards."),
 			m("li", "When the tableau is full or the Market is empty, the game is over.")
 		])
@@ -117,7 +117,10 @@ aucteraden.Scoring = function() {
 			m("li", "You are penalized 5VP for every hole remaining in your tableau."),
 			m("li", "You are penalized 5VP for each unspent or fully spent token suit.")
 		]),
-		m("p", "A score of 40 is a win, while 50 is a commanding win.")
+		m("p", ["A score of 40 is a win, while 50 is a commanding win.	 For more detailed rules, see ", 
+			m("a", {href: "./"}, "the scoresheet"),
+			"."
+		])
 	]);
 };
 
@@ -724,16 +727,12 @@ variants.VersionList = function() {
 			title: title,
 			description: description,
 			rules: m("div", {className: "rules"}, [
+				m("p", "The objective is to fill the tableau by forming long runs of orthogonally adjacent, increasing sequences of cards in each suit, preferably including Aces and/or Crowns.  Runs may snake around.  When playing with the extended deck, Pawns and Courts are below Aces."),
 				m("h2", "Turn Order"),
 				aucteraden.Rules(),
 				m("p", " For this version (" + title + "), " + rules),
 				m("h2", "Scoring"),
 				aucteraden.Scoring(),
-				m("p", [
-					"For more detailed rules, see ", 
-					m("a", {href: "./"}, "the scoresheet"),
-					"."
-				]),
 				m("button[type=button]", {onclick: modal.visible.bind(this, false)}, "Close")
 			])
 		});
