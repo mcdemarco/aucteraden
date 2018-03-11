@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><!--  manifest="aucteraden.appcache" -->
+<html manifest="asc.appcache">
 <head>
   <title>Aucteraden Scorer</title>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -20,7 +20,7 @@
   <div id="app">
 		<div class="footer">
 			<p>
-				<button type="button" v-on:click="settings.play = !settings.play">Play</button>
+				<button type="button"><a style="text-decoration:none;" v-bind:href="playURL">Play</a></button>
 				<button type="button" v-on:click="settings.score = !settings.score">Score</button>
 				<button type="button" v-on:click="settings.rules = !settings.rules">Rules</button>
 				<span class="nowrap padd">
@@ -28,10 +28,6 @@
 					<label for="extendedCheckbox">Extended Decktet</label>
 				</span>
 			</p>
-		</div>
-		<div class="wrapper big" v-if="settings.play">
-			<h2>Play</h2>
-			<div id="market">{{market}}</div>
 		</div>
 		<div class="wrapper big" v-if="settings.score">
 			<h2>Scoresheet</h2>
@@ -137,6 +133,7 @@
 				<h3>Scoring <button type="button" v-on:click="rules.score = !rules.score">{{rules.score ? "-" : "+"}}</button></h3>
 				<div class="detail" v-if="rules.score">
 					<h4>Victory Points</h4>
+					<p>A score of 40 is a win, while 50 is a commanding win.</p>
 					<p>
 						Score one ascending chain per suit, according to the following table.
 					</p>

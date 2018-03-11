@@ -86,7 +86,7 @@ aucteraden.Game = function() {
 		marketType: m.route.param("market"),
 		message: "",
 		over: false,
-		score: 0,
+		score: {total: 0, badTokenPenalty: -30, suit: {Moons: -5, Suns: -5, Knots: -5, Waves: -5, Leaves: -5, Wyrms: -5, total: -30}},
 		splayed: false,
 		unpaid:  {suits: [], price: 0},
 		discards: 0,
@@ -100,10 +100,10 @@ aucteraden.Game = function() {
 aucteraden.Rules = function() {
 	return m("div", [
 		m("ol", [
-			m("li", "Buy a card from the market."),
-			m("li", "Play to the tableau."),
-			m("li", "The market refills."),
-			m("li", "Game over?")
+			m("li", "Buy a card from the market by clicking on it.  When you have a choice of payment, the options will be highlighted; click one to pay.  If you cannot afford, can't place, or don't like the market cards, click Discard Market to draw more."),
+			m("li", "Play your purchased card by clicking on an empty tableau spot.  Use the + buttons to shift the tableau if necessary."),
+			m("li", "The market refills automatically.  Some cards may be discarded when refilling; click on the Waste pile to see all discards."),
+			m("li", "When the tableau is full or the Market is empty, the game is over.")
 		])
 	]);
 };
@@ -111,12 +111,13 @@ aucteraden.Rules = function() {
 aucteraden.Scoring = function() {
 	return m("div", [
 		m("ul", [
-			m("li", "You score the longest run in each suit on a sliding scale from -5VP for fewer than 2 cards to 30VP for 7 or more cards."),
-			m("li", "You score bonus points for having an Ace (1VP), Crown (2VP) or both (4VP) in each scoring run."),
+			m("li", "The longest run in each suit is scored on a sliding scale from -5VP for fewer than 2 cards to 30VP for 7 or more cards."),
+			m("li", "You get bonus points for having the Ace (1VP), Crown (2VP) or both (4VP) in a run."),
 			m("li", "You are penalized 3VP each time you discard the market."),
-			m("li", "You are penalized 5VP for each hole remaining in your tableau."),
-			m("li", "You are penalized 5VP for each unspent or fully spent token suit (that is, for having either zero or four tokens remaning in a suit)."),
-		])
+			m("li", "You are penalized 5VP for every hole remaining in your tableau."),
+			m("li", "You are penalized 5VP for each unspent or fully spent token suit.")
+		]),
+		m("p", "A score of 40 is a win, while 50 is a commanding win.")
 	]);
 };
 
@@ -263,68 +264,6 @@ aucteraden.legalNeighbors = function(tableau,r,c,newRank) {
 	return isLegal;
 };
 
-aucteraden.findSingleCards = function(tableau,suit) {
-	var runs = [];
-	tableau.forEach(function(row,idr) {
-		row.forEach(function(card,idc) {
-
-			if (card.suits().indexOf(suit) > -1) {
-				//Only one card in each single card run.
-				var scoreArray = [];
-				var scorable = {row:idr,column:idc,value:card.value(),rank:card.rank()};
-				scoreArray.push(scorable);
-				runs.push(scoreArray);
-			}
-		});
-	});
-	return runs;
-};
-
-aucteraden.expandRuns = function(tableau,runs,suit) {
-	var newRuns = [];
-	var card;
-	runs.forEach(function(runArray,idx) {
-		var run = runArray[runArray.length-1];
-		var r = run.row;
-		var c = run.column;
-		var newArray;
-		[-1,1].forEach(function(val) {
-			if (r + val >= 0 && r + val <= 3) {
-				card = tableau[r+val][c];
-				if (card.suits().indexOf(suit) > -1 && card.value() > run.value) {
-					newArray = runArray.slice();
-					newArray.push({row:r+val,column:c,value:card.value(),rank:card.rank()});
-				  newRuns.push(newArray);
-				}
-			}
-			if (c + val >= 0 && c + val <= 3) {
-				card = tableau[r][c+val];
-				if (card.suits().indexOf(suit) > -1 && card.value() > run.value) {
-					newArray = runArray.slice();
-					newArray.push({row:r,column:c+val,value:card.value(),rank:card.rank()});
-					newRuns.push(newArray);
-				}
-			}
-		});
-	});
-	return newRuns;
-};
-
-aucteraden.findRuns = function(tableau,suit) {
-	//Return all runs for the suit, in a special scoreable format.
-	var runs = aucteraden.findSingleCards(tableau,suit);
-	if (runs.length <= 1)
-		return runs;
-
-	var lastRuns = runs;
-	var nextRuns = runs;
-	//Check next level.
-	while (nextRuns.length > 0) {
-		lastRuns = nextRuns;
-		nextRuns = aucteraden.expandRuns(tableau,lastRuns,suit);
-	}
-	return lastRuns;
-};
 
 /* suit and price checking */
 
@@ -619,9 +558,74 @@ aucteraden.done = function(game) {
 	return game;
 };
 
+aucteraden.findSingleCards = function(tableau,suit) {
+	var runs = [];
+	tableau.forEach(function(row,idr) {
+		row.forEach(function(card,idc) {
+
+			if (card.suits().indexOf(suit) > -1) {
+				//Only one card in each single card run.
+				var scoreArray = [];
+				var scorable = {row:idr,column:idc,value:card.value(),rank:card.rank()};
+				scoreArray.push(scorable);
+				runs.push(scoreArray);
+			}
+		});
+	});
+	return runs;
+};
+
+aucteraden.expandRuns = function(tableau,runs,suit) {
+	var newRuns = [];
+	var card;
+	runs.forEach(function(runArray,idx) {
+		var run = runArray[runArray.length-1];
+		var r = run.row;
+		var c = run.column;
+		var newArray;
+		[-1,1].forEach(function(val) {
+			if (r + val >= 0 && r + val <= 3) {
+				card = tableau[r+val][c];
+				if (card.suits().indexOf(suit) > -1 && card.value() > run.value) {
+					newArray = runArray.slice();
+					newArray.push({row:r+val,column:c,value:card.value(),rank:card.rank()});
+				  newRuns.push(newArray);
+				}
+			}
+			if (c + val >= 0 && c + val <= 3) {
+				card = tableau[r][c+val];
+				if (card.suits().indexOf(suit) > -1 && card.value() > run.value) {
+					newArray = runArray.slice();
+					newArray.push({row:r,column:c+val,value:card.value(),rank:card.rank()});
+					newRuns.push(newArray);
+				}
+			}
+		});
+	});
+	return newRuns;
+};
+
+aucteraden.findRuns = function(tableau,suit) {
+	//Return all runs for the suit, in a special scoreable format.
+	var runs = aucteraden.findSingleCards(tableau,suit);
+	if (runs.length <= 1)
+		return runs;
+
+	var lastRuns = runs;
+	var nextRuns = runs;
+	//Check next level.
+	while (nextRuns.length > 0) {
+		lastRuns = nextRuns;
+		nextRuns = aucteraden.expandRuns(tableau,lastRuns,suit);
+	}
+	return lastRuns;
+};
+
 aucteraden.score = function(game) {
 	//The complex part of scoring is runs.
-	var score = aucteraden.scoreRunsAndBonuses(game.foundation);
+	game = aucteraden.scoreRunsAndBonuses(game);
+
+	game.score.total = game.score.suit.total;
 
 	//Subtract penalties.
 	var emptyTableauCount = game.foundation.reduce(function(acc,subarray) {
@@ -629,29 +633,55 @@ aucteraden.score = function(game) {
 			return ac2 + (aucteraden.isBlank(card) ? 1 : 0);
 		}, 0);
 	},0);
-	score -= 5 * emptyTableauCount;
+	game.score.total -= 5 * emptyTableauCount;
 
 	var badTokenSuitCount = Object.keys(game.tokens).reduce(function(acc,key) {
 		return acc + (game.tokens[key] == 0 || game.tokens[key] == 4 ? 1 : 0);
 	},0);
-	score -= 5 * badTokenSuitCount;
+	game.score.badTokenPenalty = -5 * badTokenSuitCount;
 
-  score -= 3 * game.discards;
+	game.score.total -= 5 * badTokenSuitCount;
 
-	game.score = score;
+  game.score.total -= 3 * game.discards;
+
 	return game;
 };
 
-aucteraden.scoreRunsAndBonuses = function(tableau) {
-	var score = ["Moons", "Suns", "Knots", "Waves", "Leaves", "Wyrms"].reduce(function(acc,suit) {
+aucteraden.hasAce = function(singleRunArray) {
+	return (singleRunArray[0].value == 1 || (singleRunArray.length > 1 && singleRunArray[1].value == 1));
+};
+
+aucteraden.runBonusCalculator = function(longestRunsArray) {
+	//The crown will be the last card of the run, if it's there.
+	var crownIdx = longestRunsArray.reduce(function(acc,runArray,idx) {
+		return Math.max(acc, (runArray[runArray.length-1].value == 10 ? idx : -1));
+	},-1);
+	var aceIdx = longestRunsArray.reduce(function(acc,runArray,idx) {
+		return Math.max(acc, (aucteraden.hasAce(runArray) ? idx : -1));
+	},-1);
+	if (crownIdx > -1) {
+		if (aceIdx == crownIdx)
+			return 4;
+		else 
+			return 2;
+	} else if (aceIdx > -1) {
+		return 1;
+	} else 
+		return 0;
+};
+
+aucteraden.scoreRunsAndBonuses = function(game) {
+	game.score.suit.total = ["Moons", "Suns", "Knots", "Waves", "Leaves", "Wyrms"].reduce(function(acc,suit) {
 		//This is only finding the longest, not scoring Aces/Crowns/Both.
-		var longRuns = aucteraden.findRuns(tableau,suit);
+		var longRuns = aucteraden.findRuns(game.foundation,suit);
 		var runLength = longRuns.length > 0 ? longRuns[0].length : 0;
 		var runScore = [-5,-5,2,5,9,14,20,30,30,30,30,30][runLength];
-		aucteraden.debug(suit + ": " + runLength + " = " + runScore);
-		return acc + runScore;
+		var runBonus = aucteraden.runBonusCalculator(longRuns);
+		//aucteraden.debug(suit + ": " + runLength + " + " + runBonus + " = " + runScore);
+		game.score.suit[suit] = runScore + runBonus; 
+		return acc + runScore + runBonus;
 	},0);
-	return score;
+	return game;
 };
 
 
@@ -793,12 +823,14 @@ variants.view = function(ctrl) {
 					])
 				]),
 				m("div", {className: "message"}, [
-					m("h4", "Score: " + ctrl.game.score)
+					m("h4", "Score: ", [
+						m("span", {className: "legible"}, ctrl.game.score.total)
+					])
 				]),
 				m("div", {className: "buttonWrapper"}, [
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl)}, "Restart"),
 					m("button[type=button]", {className: "mainButton", onclick: modal.visible.bind(ctrl, true)}, "Rules"),
-					m("button[type=button]", {className: "mainButton", onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards + ")" : ""))
+					m("button[type=button]", {className: "mainButton", onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards * -3 + ")" : ""))
 				]),
 				// Stock and waste.
 				m("div", {className: "deckWrapper"}, [
@@ -831,7 +863,11 @@ variants.view = function(ctrl) {
 						]);
 					})
 				]),
-				m("p", {className: "description"}, "code by M. C. DeMarco")
+				m("p", {className: "description"}, [
+					m("h4", [
+						m("a", {href: "./"}, "Credits")
+					])
+				])
 			]),
 
 			// Tokens
@@ -847,11 +883,26 @@ variants.view = function(ctrl) {
 								return m("div");
 						})
 					]);
-				})
+				}),
+				m("div", {className: "scoreDiv"}, ctrl.game.score.badTokenPenalty)
 			]),
 
 			// Foundation
-			aucteraden.viewFoundation(ctrl)
+			aucteraden.viewFoundation(ctrl),
+
+			//Runs.
+			m("div", {className: "scoreWrapper"}, [
+				m("h4", "Runs"),
+				Object.keys(ctrl.game.score.suit).map(function(key) {
+					return m("div", {className: "scoreSet"}, [
+						m("div", {className: "scoreDiv"}, [
+							(key != "total" ?	m("img", {className: "token", src: "css/" + key.toLowerCase() + ".png" }) : m("hr")),
+							m("div", {className: "score"}, ctrl.game.score.suit[key])
+						])
+					]);
+				})
+			]),
+
 		]),
 		modal.view(function() {
 			return m("div", ctrl.versions.filter(function(v) {return v.type() == m.route.param("market"); })[0].rules());
