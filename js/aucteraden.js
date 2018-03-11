@@ -9,6 +9,7 @@ aucteraden.Card = function(data) {
 	this.suits = m.prop(data.suits);
 	this.name = m.prop(data.name);
 	this.image = m.prop(data.image);
+	this.value = m.prop(data.value);
 };
 
 aucteraden.Deck = function() {
@@ -44,21 +45,21 @@ aucteraden.Deck = function() {
 	deck.push(makeCard('9', ['Leaves', 'Knots'], 'the MERCHANT', '9_merchant.png',9));
 	deck.push(makeCard('9', ['Moons', 'Suns'], 'the PACT', '9_pact.png',9));
 	if (m.route.param("extended") == "extended") {
-		deck.push(makeCard('PAWN', ['Waves', 'Leaves', 'Wyrms'], 'the BORDERLAND', 'pawn_borderland.png',10));
-		deck.push(makeCard('PAWN', ['Moons', 'Suns', 'Leaves'], 'the HARVEST', 'pawn_harvest.png',10));
-		deck.push(makeCard('PAWN', ['Suns', 'Waves', 'Knots'], 'the LIGHT KEEPER', 'pawn_light_keeper.png',10));
-		deck.push(makeCard('PAWN', ['Moons', 'Wyrms', 'Knots'], 'the WATCHMAN', 'pawn_watchman.png',10));
-		deck.push(makeCard('COURT', ['Moons', 'Waves', 'Knots'], 'the CONSUL', '11_court_consul.png',11));
-		deck.push(makeCard('COURT', ['Suns', 'Waves', 'Wyrms'], 'the ISLAND', '11_court_island.png',11));
-		deck.push(makeCard('COURT', ['Moons', 'Leaves', 'Wyrms'], 'the RITE', '11_court_rite.png',11));
-		deck.push(makeCard('COURT', ['Suns', 'Leaves', 'Knots'], 'the WINDOW', '11_court_window.png',11));
+		deck.push(makeCard('PAWN', ['Waves', 'Leaves', 'Wyrms'], 'the BORDERLAND', 'pawn_borderland.png',0));
+		deck.push(makeCard('PAWN', ['Moons', 'Suns', 'Leaves'], 'the HARVEST', 'pawn_harvest.png',0));
+		deck.push(makeCard('PAWN', ['Suns', 'Waves', 'Knots'], 'the LIGHT KEEPER', 'pawn_light_keeper.png',0));
+		deck.push(makeCard('PAWN', ['Moons', 'Wyrms', 'Knots'], 'the WATCHMAN', 'pawn_watchman.png',0));
+		deck.push(makeCard('COURT', ['Moons', 'Waves', 'Knots'], 'the CONSUL', '11_court_consul.png',0));
+		deck.push(makeCard('COURT', ['Suns', 'Waves', 'Wyrms'], 'the ISLAND', '11_court_island.png',0));
+		deck.push(makeCard('COURT', ['Moons', 'Leaves', 'Wyrms'], 'the RITE', '11_court_rite.png',0));
+		deck.push(makeCard('COURT', ['Suns', 'Leaves', 'Knots'], 'the WINDOW', '11_court_window.png',0));
 	}
-	deck.push(makeCard('CROWN', ['Knots'], 'the WINDFALL', 'crown_knots.png',12));
-	deck.push(makeCard('CROWN', ['Leaves'], 'the END', 'crown_leaves.png',12));
-	deck.push(makeCard('CROWN', ['Moons'], 'the HUNTRESS', 'crown_moons.png',12));
-	deck.push(makeCard('CROWN', ['Suns'], 'the BARD', 'crown_suns.png',12));
-	deck.push(makeCard('CROWN', ['Waves'], 'the SEA', 'crown_waves.png',12));
-	deck.push(makeCard('CROWN', ['Wyrms'], 'the CALAMITY', 'crown_wyrms.png',12));
+	deck.push(makeCard('CROWN', ['Knots'], 'the WINDFALL', 'crown_knots.png',10));
+	deck.push(makeCard('CROWN', ['Leaves'], 'the END', 'crown_leaves.png',10));
+	deck.push(makeCard('CROWN', ['Moons'], 'the HUNTRESS', 'crown_moons.png',10));
+	deck.push(makeCard('CROWN', ['Suns'], 'the BARD', 'crown_suns.png',10));
+	deck.push(makeCard('CROWN', ['Waves'], 'the SEA', 'crown_waves.png',10));
+	deck.push(makeCard('CROWN', ['Wyrms'], 'the CALAMITY', 'crown_wyrms.png',10));
 	if (m.route.param("extended") != "base" ) {
 		deck.push(makeCard('', [], 'the EXCUSE', 'excuse.png', 0));
 	}
@@ -227,8 +228,6 @@ aucteraden.ranksCanNeighbor = function(rank1,rank2) {
 /* tableau helper functions */
 
 aucteraden.findNeighbors = function(tableau,r,c) {
-	console.log(r);
-	console.log(c);
 	//Returns all neighbors, real or blank.
 	var neighborArray = [];
 	var theCard;
@@ -254,19 +253,77 @@ aucteraden.legalNeighbors = function(tableau,r,c,newRank) {
 	if (["Ace","CROWN","PAWN","COURT"].indexOf(newRank) < 0)
 		return true;
 
-	console.log("in legalNeighbors with newRank " + newRank + " at row " + r + ", column " + c);
-
 	var neighborArray = aucteraden.findNeighbors(tableau,r,c);
 
 	//Accumulates truth until we hit a false.
   var isLegal = neighborArray.reduce(function(acc,neighborCard) {
-		console.log("in accumulator comparing " + newRank + " to " + neighborCard.rank());
 		var neighborly = aucteraden.ranksCanNeighbor(neighborCard.rank(),newRank);
-		console.log(neighborly);
 		return (acc && neighborly);
 	},true);
-	console.log("legal? " + isLegal);
 	return isLegal;
+};
+
+aucteraden.findSingleCards = function(tableau,suit) {
+	var runs = [];
+	tableau.forEach(function(row,idr) {
+		row.forEach(function(card,idc) {
+
+			if (card.suits().indexOf(suit) > -1) {
+				//Only one card in each single card run.
+				var scoreArray = [];
+				var scorable = {row:idr,column:idc,value:card.value(),rank:card.rank()};
+				scoreArray.push(scorable);
+				runs.push(scoreArray);
+			}
+		});
+	});
+	return runs;
+};
+
+aucteraden.expandRuns = function(tableau,runs,suit) {
+	var newRuns = [];
+	var card;
+	runs.forEach(function(runArray,idx) {
+		var run = runArray[runArray.length-1];
+		var r = run.row;
+		var c = run.column;
+		var newArray;
+		[-1,1].forEach(function(val) {
+			if (r + val >= 0 && r + val <= 3) {
+				card = tableau[r+val][c];
+				if (card.suits().indexOf(suit) > -1 && card.value() > run.value) {
+					newArray = runArray.slice();
+					newArray.push({row:r+val,column:c,value:card.value(),rank:card.rank()});
+				  newRuns.push(newArray);
+				}
+			}
+			if (c + val >= 0 && c + val <= 3) {
+				card = tableau[r][c+val];
+				if (card.suits().indexOf(suit) > -1 && card.value() > run.value) {
+					newArray = runArray.slice();
+					newArray.push({row:r,column:c+val,value:card.value(),rank:card.rank()});
+					newRuns.push(newArray);
+				}
+			}
+		});
+	});
+	return newRuns;
+};
+
+aucteraden.findRuns = function(tableau,suit) {
+	//Return all runs for the suit, in a special scoreable format.
+	var runs = aucteraden.findSingleCards(tableau,suit);
+	if (runs.length <= 1)
+		return runs;
+
+	var lastRuns = runs;
+	var nextRuns = runs;
+	//Check next level.
+	while (nextRuns.length > 0) {
+		lastRuns = nextRuns;
+		nextRuns = aucteraden.expandRuns(tableau,lastRuns,suit);
+	}
+	return lastRuns;
 };
 
 /* suit and price checking */
@@ -586,7 +643,15 @@ aucteraden.score = function(game) {
 };
 
 aucteraden.scoreRunsAndBonuses = function(tableau) {
-	return 0;
+	var score = ["Moons", "Suns", "Knots", "Waves", "Leaves", "Wyrms"].reduce(function(acc,suit) {
+		//This is only finding the longest, not scoring Aces/Crowns/Both.
+		var longRuns = aucteraden.findRuns(tableau,suit);
+		var runLength = longRuns.length > 0 ? longRuns[0].length : 0;
+		var runScore = [-5,-5,2,5,9,14,20,30,30,30,30,30][runLength];
+		aucteraden.debug(suit + ": " + runLength + " = " + runScore);
+		return acc + runScore;
+	},0);
+	return score;
 };
 
 
