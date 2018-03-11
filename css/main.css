@@ -338,8 +338,8 @@ div.modal {
     position: fixed;
     top: 5%;
     right: 5%;
-    width:60%;
-    min-width:600px;
+    width:66%;
+    min-width:660px;
     padding: 2em;
     border: 2px solid #003;
     border-radius: 12px;
