@@ -125,7 +125,7 @@ aucteraden.Scoring = function() {
 
 aucteraden.debug = function(msg) {
 	//comment out this line to turn off debugging.
-	if (console) console.log(msg);
+	//if (console) console.log(msg);
 	return;
 };
 
@@ -653,21 +653,29 @@ aucteraden.hasAce = function(singleRunArray) {
 
 aucteraden.runBonusCalculator = function(longestRunsArray) {
 	//The crown will be the last card of the run, if it's there.
-	var crownIdx = longestRunsArray.reduce(function(acc,runArray,idx) {
-		return Math.max(acc, (runArray[runArray.length-1].value == 10 ? idx : -1));
-	},-1);
-	var aceIdx = longestRunsArray.reduce(function(acc,runArray,idx) {
-		return Math.max(acc, (aucteraden.hasAce(runArray) ? idx : -1));
-	},-1);
-	if (crownIdx > -1) {
-		if (aceIdx == crownIdx)
+	var crownRunsArray = [];
+	longestRunsArray.forEach(function(runArray,idx) {
+		if (runArray[runArray.length-1].value == 10)
+			crownRunsArray.push(runArray);
+	});
+	var aceIdx;
+	if (crownRunsArray.length > 0) {
+		aceIdx = crownRunsArray.reduce(function(acc,runArray,idx) {
+			return Math.max(acc, (aucteraden.hasAce(runArray) ? idx : -1));
+		},-1);
+		if (aceIdx > -1)
 			return 4;
 		else 
 			return 2;
-	} else if (aceIdx > -1) {
-		return 1;
-	} else 
-		return 0;
+	} else {
+		aceIdx = longestRunsArray.reduce(function(acc,runArray,idx) {
+			return Math.max(acc, (aucteraden.hasAce(runArray) ? idx : -1));
+		},-1);
+		if (aceIdx > -1) 
+			return 1;
+		else
+			return 0;
+	}
 };
 
 aucteraden.scoreRunsAndBonuses = function(game) {
