@@ -835,7 +835,7 @@ variants.view = function(ctrl) {
 					])
 				]),
 				m("div", {className: "buttonWrapper"}, [
-					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl)}, "Restart"),
+					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl)}, "New Game"),
 					m("button[type=button]", {className: "mainButton", onclick: modal.visible.bind(ctrl, true)}, "Rules"),
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards * -3 + ")" : ""))
 				]),
