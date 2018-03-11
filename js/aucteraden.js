@@ -533,12 +533,12 @@ aucteraden.play = function(game,r,c) {
 		game.play = aucteraden.makeBlank();
 		//Score here.
 		game = aucteraden.score(game);
-		//Save here.
-		//aucteraden.save(game);
 		//Check for doneneess.
 		game = aucteraden.done(game);
 		//Rechecks for doneness.
 		game = aucteraden.drawMarket(game);
+		//Save here.
+		aucteraden.save(game);
 	}
 	return game;
 };
@@ -777,7 +777,7 @@ variants.ExtendedDeck = function() {
 //controller
 variants.controller = function() {
 
-	this.game = aucteraden.Game(); //checkForGame();
+	this.game = checkForGame();
 	this.versions = variants.VersionList();
 	this.extended = variants.ExtendedDeck();
 	
