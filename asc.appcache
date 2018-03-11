@@ -1,0 +1,16 @@
+CACHE MANIFEST
+# v0.1.0 # 2018-03-11
+# index.html is the file that calls this manifest.
+
+CACHE:
+app.js
+css/fortune-letters.ttf
+css/knots.png
+css/leaves.png
+css/main.css
+css/moons.png
+css/skulls.png
+css/suns.png
+css/waves.png
+css/wyrms.png
+js/vue.js
