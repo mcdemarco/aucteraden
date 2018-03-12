@@ -79,7 +79,6 @@ aucteraden.Deck = function() {
 aucteraden.Game = function() {
 	var game = {
 		deck: aucteraden.shuffle(aucteraden.Deck()),
-		deckType: m.route.param("extended"),
 		waste: [],
 		play: aucteraden.makeBlank(),
 		foundation: aucteraden.makeFoundation(),
@@ -722,6 +721,7 @@ aucteraden.checkForGame = function(currentGame) {
 		var storedGame = currentGame ? localStorage.getItem("prevAuct") : localStorage.getItem("auct");
 		if (storedGame) {
 			storedGame = JSON.parse(storedGame);
+			//Note that routing may not match the game for a stored game, but this appears harmless.
 			return storedGame;
 		} else if (currentGame) {
 			currentGame.message = "Nothing to undo.";
@@ -814,7 +814,7 @@ variants.controller = function() {
 	this.reset = function() {
 		this.game = aucteraden.Game();
 		//Initial save.
-		aucteraden.save(game);
+		aucteraden.save(this.game);
 	};
 	
 	this.discard = function() {
