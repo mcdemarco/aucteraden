@@ -9,6 +9,7 @@ aucteraden.Card = function(data) {
 	this.suits = data.suits;
 	this.name = data.name;
 	this.image = data.image;
+	this.blackImage = data.blackImage;
 	this.value = data.value;
 };
 
@@ -71,6 +72,7 @@ aucteraden.Deck = function() {
 			suits: suits,
 			name: name,
 			image: image,
+			blackImage: (suits.indexOf("Moons") > -1) ? image.split(".png")[0] + "_black.png" : image,
 			value: value
 		});
 	};
@@ -90,7 +92,8 @@ aucteraden.Game = function() {
 		splayed: false,
 		unpaid:  {suits: [], price: 0},
 		discards: 0,
-		tokens: {Moons: 4, Suns: 4, Knots: 4, Waves: 4, Leaves: 4, Wyrms: 4}
+		tokens: {Moons: 4, Suns: 4, Knots: 4, Waves: 4, Leaves: 4, Wyrms: 4},
+		blackMoons: false
 	};
 	game = aucteraden.score(game);
 	game = aucteraden.drawMarket(game);
@@ -154,7 +157,8 @@ aucteraden.makeBlank = function() {
 		rank: "BLANK",
 		suits: [],
 		name: "blank",
-		image: "blank.png"
+		image: "blank.png",
+		blackImage: "blank.png"
 	});
 };
 
@@ -333,7 +337,7 @@ aucteraden.viewFoundation = function(ctrl) {
 			if (currRowArray.length > 0) {
 				return m("div", {className: "foundation"}, [
 					currRowArray.map(function(card,idc) {
-						return m("img", {className: "card", src: "cards/" + card.image, style: "left: 1em", onclick: aucteraden.isBlank(card) ? ctrl.play.bind(ctrl,idr,idc) : ""});
+						return m("img", {className: "card", src: "cards/" + (ctrl.game.blackMoons ? card.blackImage : card.image), style: "left: 1em", onclick: aucteraden.isBlank(card) ? ctrl.play.bind(ctrl,idr,idc) : ""});
 					})
 				]);
 			} else {
@@ -751,9 +755,9 @@ var modal = {
 var variants = {};
 
 variants.Version = function(data) {
-	this.type = m.prop(data.type);
-	this.title = m.prop(data.title);
-	this.description = m.prop(data.description);
+	this.type = data.type;
+	this.title = data.title;
+	this.description = data.description;
 	this.rules = m.prop(data.rules);
 };
 
@@ -783,9 +787,9 @@ variants.VersionList = function() {
 };
 
 variants.Extended = function(data) {
-	this.type = m.prop(data.type);
-	this.title = m.prop(data.title);
-	this.description = m.prop(data.description);
+	this.type = data.type;
+	this.title = data.title;
+	this.description = data.description;
 };
 
 variants.ExtendedDeck = function() {
@@ -851,6 +855,7 @@ variants.view = function(ctrl) {
 
 	return m("div", {className: "bodyWrapper"}, [
 		m("main", [
+//			m("div", {className: "leftWrapper"}, [
 			m("div", {className: "leftColumn"}, [
 				m("header", [
 					m("h1", "Aucteraden"),
@@ -861,10 +866,10 @@ variants.view = function(ctrl) {
 						m("b", "Version: "),
 						m('select', { onchange : function() { m.route(this.value + "/" + m.route.param("extended")); }}, [
 							ctrl.versions.map(function(v, i) {
-								if (v.type() == m.route.param("market"))
-									return m('option', { value: v.type(), innerHTML: v.title(), selected: "selected" });
+								if (v.type == m.route.param("market"))
+									return m('option', { value: v.type, innerHTML: v.title, selected: "selected" });
 								else
-									return m('option', { value: v.type(), innerHTML: v.title() });
+									return m('option', { value: v.type, innerHTML: v.title });
 							})
 						])
 					]),
@@ -872,12 +877,16 @@ variants.view = function(ctrl) {
 						m("b", "Deck: "),
 						m('select', { onchange : function() {m.route(m.route.param("market") + "/" + this.value); }}, [
 							ctrl.extended.map(function(e, i) {
-								if (e.type() == m.route.param("extended"))
-									return m('option', { value: e.type(), innerHTML: e.title(), selected: "selected" });
+								if (e.type == m.route.param("extended"))
+									return m('option', { value: e.type, innerHTML: e.title, selected: "selected" });
 								else
-									return m('option', { value: e.type(), innerHTML: e.title() });
+									return m('option', { value: e.type, innerHTML: e.title });
 							})
 						])
+					]),
+					m("div", {className: "nowrapp", title: "Use black moons."}, [
+						m("img", {src: "css/moons_black.png", className: "smallMoon"}),
+						m('input[type=checkbox]', {checked : ctrl.game.blackMoons, onclick : function(){ctrl.game.blackMoons = this.checked;}})
 					])
 				]),
 				m("div", {className: "message"}, [
@@ -901,12 +910,12 @@ variants.view = function(ctrl) {
 						m("h4","Waste (" + ctrl.game.waste.length + ")"),
 						m("img", {className: "card", src: "cards/blank.png"}),
 						ctrl.game.waste.map(function(cardObj,index) {
-							return m("img", {className: "card", src: "cards/" + cardObj.image, onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
+							return m("img", {className: "card", src: "cards/" + (ctrl.game.blackMoons ? cardObj.blackImage : cardObj.image), onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
 						})
 					]),
 					m("div", {className: "play"}, [
 						m("h4", {className: ctrl.game.unpaid.price ? "message" : ""}, (ctrl.game.unpaid.price ? "Pay " + ctrl.game.unpaid.price : "Play")),
-						m("img", {className: "card", src: "cards/" + ctrl.game.play.image})
+						m("img", {className: "card", src: "cards/" + (ctrl.game.blackMoons ? ctrl.game.play.blackImage : ctrl.game.play.image)})
 					])
 				]),
 				//Messages
@@ -918,7 +927,7 @@ variants.view = function(ctrl) {
 					[2,1,0].map(function(row) {
 						return m("div", {className: "stock"}, [
 							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && (ctrl.game.market[row].rank == "PAWN" || ctrl.game.market[row].rank == "COURT") ? " + 1" : "")),
-							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.game.market[row].image : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
+							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? (ctrl.game.blackMoons ? ctrl.game.market[row].blackImage : ctrl.game.market[row].image) : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
 						]);
 					})
 				]),
@@ -936,7 +945,7 @@ variants.view = function(ctrl) {
 						[1,2,3,4].map(function(cnt) {
 							if (ctrl.game.tokens[key] >= cnt)
 								return m("div", {className: "tokenDiv"}, [
-									m("img", {className: "token", src: "css/" + key.toLowerCase() + ".png"})
+									m("img", {className: "token", src: "css/" + key.toLowerCase() + (ctrl.game.blackMoons && key=="Moons" ? "_black" : "") + ".png"})
 								]);
 							else
 								return m("div");
@@ -945,7 +954,8 @@ variants.view = function(ctrl) {
 				}),
 				m("div", {className: "scoreDiv"}, ctrl.game.score.badTokenPenalty)
 			]),
-
+//			]), //End leftWrapper
+//			m("div", {className: "rightWrapper"}, [
 			// Foundation
 			aucteraden.viewFoundation(ctrl),
 
@@ -955,7 +965,7 @@ variants.view = function(ctrl) {
 				Object.keys(ctrl.game.score.suit).map(function(key) {
 					return m("div", {className: "scoreSet"}, [
 						m("div", {className: "scoreDiv"}, [
-							(key != "total" ?	m("img", {className: "token", src: "css/" + key.toLowerCase() + ".png" }) : m("hr")),
+							(key != "total" ?	m("img", {className: "token", src: "css/" + key.toLowerCase() + (ctrl.game.blackMoons && key=="Moons" ? "_black" : "") + ".png" }) : m("hr")),
 							m("div", {className: "score"}, ctrl.game.score.suit[key])
 						])
 					]);
@@ -963,8 +973,9 @@ variants.view = function(ctrl) {
 			]),
 
 		]),
+//		]),
 		modal.view(function() {
-			return m("div", ctrl.versions.filter(function(v) {return v.type() == m.route.param("market"); })[0].rules());
+			return m("div", ctrl.versions.filter(function(v) {return v.type == m.route.param("market"); })[0].rules());
 		})
 	]);
 };
