@@ -93,7 +93,8 @@ aucteraden.Game = function() {
 		unpaid:  {suits: [], price: 0},
 		discards: 0,
 		tokens: {Moons: 4, Suns: 4, Knots: 4, Waves: 4, Leaves: 4, Wyrms: 4},
-		blackMoons: false
+		blackMoons: false,
+		previous: ""
 	};
 	game = aucteraden.score(game);
 	game = aucteraden.drawMarket(game);
@@ -366,6 +367,7 @@ aucteraden.discardMarket = function(game) {
 	if (game.deck.length == 0) {
 		game.message = "No more cards to draw.";
 	} else {
+		game = aucteraden.checkpoint(game);
 		game = aucteraden.clearMarket(game);
 		game.discards++;
 		game = aucteraden.score(game);
@@ -487,6 +489,7 @@ aucteraden.buy = function(game,row) {
 	} else if (!aucteraden.positionChecker(game.foundation,buyCard.rank)) {
 		game.message = "You cannot play that card.";
 	} else {
+		game = aucteraden.checkpoint(game);
 		game.play = game.market.splice(row,1)[0];
 		aucteraden.debug("Buying " + buyCard.name + ".");
 		game.message = ("Buying " + buyCard.name + ".");
@@ -542,7 +545,7 @@ aucteraden.play = function(game,r,c) {
 		//Rechecks for doneness.
 		game = aucteraden.drawMarket(game);
 		//Save here.
-		aucteraden.save(game);
+		game = aucteraden.save(game);
 	}
 	return game;
 };
@@ -550,15 +553,11 @@ aucteraden.play = function(game,r,c) {
 aucteraden.save = function(game) {
 	try {
 		var stringyGame = JSON.stringify(game);
-		var tempgame = localStorage.getItem("auct");
-		if (tempgame && tempgame != stringyGame)
-			localStorage.setItem("prevAuct", tempgame);
 		localStorage.setItem("auct", stringyGame);
-		return;
 	} catch(e) {
 		aucteraden.debug("Autosave failed.");
-		return;
 	}
+	return game;
 };
 
 /* endgame */
@@ -718,28 +717,33 @@ aucteraden.scoreRunsAndBonuses = function(game) {
 	return game;
 };
 
-/* storage */
+/* storage and undos */
 
-aucteraden.checkForGame = function(currentGame) {
+aucteraden.checkpoint = function(game) {
+	game.previous = JSON.stringify(game);
+	return game;
+};
+
+aucteraden.undo = function(game) {
+	if (game.previous.length > 0)
+		game = JSON.parse(game.previous);
+	else
+		game.message = "Nothing to undo.";
+	return game;
+};
+
+aucteraden.checkForGame = function() {
 	try {
-		var storedGame = currentGame ? localStorage.getItem("prevAuct") : localStorage.getItem("auct");
+		var storedGame = localStorage.getItem("auct");
 		if (storedGame) {
 			storedGame = JSON.parse(storedGame);
 			//Note that routing may not match the game for a stored game, but this appears harmless.
 			return storedGame;
-		} else if (currentGame) {
-			currentGame.message = "Nothing to undo.";
-			return currentGame;
 		} else {
 			return aucteraden.Game();
 		}
 	} catch(e) {
-		if (currentGame) {
-			currentGame.message = "Undo failed.";
-			return currentGame;
-		} else {
-			return aucteraden.Game();
-		}
+		return aucteraden.Game();
 	}
 };
 
@@ -842,10 +846,8 @@ variants.controller = function() {
 	};
 
 	this.undo = function() {
-		this.game = aucteraden.checkForGame(this.game);
+		this.game = aucteraden.undo(this.game);
 	};
-
-
 
 };
 
