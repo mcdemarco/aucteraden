@@ -79,6 +79,7 @@ aucteraden.Deck = function() {
 aucteraden.Game = function() {
 	var game = {
 		deck: aucteraden.shuffle(aucteraden.Deck()),
+		deckType: m.route.param("extended"),
 		waste: [],
 		play: aucteraden.makeBlank(),
 		foundation: aucteraden.makeFoundation(),
@@ -545,10 +546,14 @@ aucteraden.play = function(game,r,c) {
 
 aucteraden.save = function(game) {
 	try {
-		localStorage.setItem("game",JSON.stringify(game));
+		var stringyGame = JSON.stringify(game);
+		var tempgame = localStorage.getItem("auct");
+		if (tempgame && tempgame != stringyGame)
+			localStorage.setItem("prevAuct", tempgame);
+		localStorage.setItem("auct", stringyGame);
 		return;
 	} catch(e) {
-		aucteraden.debug("Save failed.");
+		aucteraden.debug("Autosave failed.");
 		return;
 	}
 };
@@ -710,6 +715,29 @@ aucteraden.scoreRunsAndBonuses = function(game) {
 	return game;
 };
 
+/* storage */
+
+aucteraden.checkForGame = function(currentGame) {
+	try {
+		var storedGame = currentGame ? localStorage.getItem("prevAuct") : localStorage.getItem("auct");
+		if (storedGame) {
+			storedGame = JSON.parse(storedGame);
+			return storedGame;
+		} else if (currentGame) {
+			currentGame.message = "Nothing to undo.";
+			return currentGame;
+		} else {
+			return aucteraden.Game();
+		}
+	} catch(e) {
+		if (currentGame) {
+			currentGame.message = "Undo failed.";
+			return currentGame;
+		} else {
+			return aucteraden.Game();
+		}
+	}
+};
 
 //modal module
 var modal = {
@@ -779,12 +807,14 @@ variants.ExtendedDeck = function() {
 //controller
 variants.controller = function() {
 
-	this.game = checkForGame();
+	this.game = aucteraden.checkForGame();
 	this.versions = variants.VersionList();
 	this.extended = variants.ExtendedDeck();
 	
 	this.reset = function() {
 		this.game = aucteraden.Game();
+		//Initial save.
+		aucteraden.save(game);
 	};
 	
 	this.discard = function() {
@@ -807,20 +837,11 @@ variants.controller = function() {
 		this.game = aucteraden.shiftFoundation(this.game,direction);
 	};
 
-	function checkForGame() {
-		try {
-			var storedGame = localStorage.getItem("game");
-			console.log(storedGame);
-			if (storedGame) {
-				storedGame = JSON.parse(storedGame);
-				return storedGame;
-			} else {
-				return aucteraden.Game();
-			}
-		} catch(e) {
-			return aucteraden.Game();
-		}
+	this.undo = function() {
+		this.game = aucteraden.checkForGame(this.game);
 	};
+
+
 
 };
 
@@ -866,6 +887,7 @@ variants.view = function(ctrl) {
 				]),
 				m("div", {className: "buttonWrapper"}, [
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl)}, "New Game"),
+					m("button[type=button]", {className: "mainButton", onclick: ctrl.undo.bind(ctrl)}, "Undo"),
 					m("button[type=button]", {className: "mainButton", onclick: modal.visible.bind(ctrl, true)}, "Rules"),
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards * -3 + ")" : ""))
 				]),
