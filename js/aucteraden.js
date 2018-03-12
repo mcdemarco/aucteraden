@@ -649,11 +649,13 @@ aucteraden.score = function(game) {
 			return ac2 + (aucteraden.isBlank(card) ? 1 : 0);
 		}, 0);
 	},0);
+
 	game.score.total -= 5 * emptyTableauCount;
 
 	var badTokenSuitCount = Object.keys(game.tokens).reduce(function(acc,key) {
 		return acc + (game.tokens[key] == 0 || game.tokens[key] == 4 ? 1 : 0);
 	},0);
+
 	game.score.badTokenPenalty = -5 * badTokenSuitCount;
 
 	game.score.total -= 5 * badTokenSuitCount;
@@ -859,7 +861,7 @@ variants.view = function(ctrl) {
 				]),
 				m("div", {className: "message"}, [
 					m("h4", "Score: ", [
-						m("span", {className: "legible"}, ctrl.game.score.total)
+						m("span", {className: "legible"}, (ctrl.game.score.total > 0 || ctrl.game.over) ? ctrl.game.score.total : "...")
 					])
 				]),
 				m("div", {className: "buttonWrapper"}, [
