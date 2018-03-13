@@ -5,6 +5,7 @@
 var aucteraden = {};
 
 aucteraden.Card = function(data) {
+	this.id = data.id;
 	this.rank = data.rank;
 	this.suits = data.suits;
 	this.name = data.name;
@@ -14,60 +15,72 @@ aucteraden.Card = function(data) {
 };
 
 aucteraden.Deck = function() {
-	var deck = [];
-	deck.push(makeCard('Ace', ['Knots'], 'Ace of Knots', '1_ace_knots.png',1));
-	deck.push(makeCard('Ace', ['Leaves'], 'Ace of Leaves', '1_ace_leaves.png',1));
-	deck.push(makeCard('Ace', ['Moons'], 'Ace of Moons', '1_ace_moons.png',1));
-	deck.push(makeCard('Ace', ['Suns'], 'Ace of Suns', '1_ace_suns.png',1));
-	deck.push(makeCard('Ace', ['Waves'], 'Ace of Waves', '1_ace_waves.png',1));
-	deck.push(makeCard('Ace', ['Wyrms'], 'Ace of Wyrms', '1_ace_wyrms.png',1));
-	deck.push(makeCard('2', ['Moons', 'Knots'], 'the AUTHOR', '2_author.png',2));
-	deck.push(makeCard('2', ['Suns', 'Wyrms'], 'the DESERT', '2_desert.png',2));
-	deck.push(makeCard('2', ['Waves', 'Leaves'], 'the ORIGIN', '2_origin.png',2));
-	deck.push(makeCard('3', ['Moons', 'Waves'], 'the JOURNEY', '3_journey.png',3));
-	deck.push(makeCard('3', ['Suns', 'Knots'], 'the PAINTER', '3_painter.png',3));
-	deck.push(makeCard('3', ['Leaves', 'Wyrms'], 'the SAVAGE', '3_savage.png',3));
-	deck.push(makeCard('4', ['Wyrms', 'Knots'], 'the BATTLE', '4_battle.png',4));
-	deck.push(makeCard('4', ['Moons', 'Suns'], 'the MOUNTAIN', '4_mountain.png',4));
-	deck.push(makeCard('4', ['Waves', 'Leaves'], 'the SAILOR', '4_sailor.png',4));
-	deck.push(makeCard('5', ['Suns', 'Waves'], 'the DISCOVERY', '5_discovery.png',5));
-	deck.push(makeCard('5', ['Moons', 'Leaves'], 'the FOREST', '5_forest.png',5));
-	deck.push(makeCard('5', ['Wyrms', 'Knots'], 'the SOLDIER', '5_soldier.png',5));
-	deck.push(makeCard('6', ['Moons', 'Waves'], 'the LUNATIC', '6_lunactic.png',6));
-	deck.push(makeCard('6', ['Leaves', 'Knots'], 'the MARKET', '6_market.png',6));
-	deck.push(makeCard('6', ['Suns', 'Wyrms'], 'the PENITENT', '6_penitent.png',6));
-	deck.push(makeCard('7', ['Suns', 'Knots'], 'the CASTLE', '7_castle.png',7));
-	deck.push(makeCard('7', ['Waves', 'Wyrms'], 'the CAVE', '7_cave.png',7));
-	deck.push(makeCard('7', ['Moons', 'Leaves'], 'the CHANCE MEETING', '7_chance_meeting.png',7));
-	deck.push(makeCard('8', ['Wyrms', 'Knots'], 'the BETRAYAL', '8_betrayal.png',8));
-	deck.push(makeCard('8', ['Moons', 'Suns'], 'the DIPLOMAT', '8_diplomat.png',8));
-	deck.push(makeCard('8', ['Waves', 'Leaves'], 'the MILL', '8_mill.png',8));
-	deck.push(makeCard('9', ['Waves', 'Wyrms'], 'the DARKNESS', '9_darkness.png',9));
-	deck.push(makeCard('9', ['Leaves', 'Knots'], 'the MERCHANT', '9_merchant.png',9));
-	deck.push(makeCard('9', ['Moons', 'Suns'], 'the PACT', '9_pact.png',9));
-	if (m.route.param("extended") == "extended") {
-		deck.push(makeCard('PAWN', ['Waves', 'Leaves', 'Wyrms'], 'the BORDERLAND', 'pawn_borderland.png',0));
-		deck.push(makeCard('PAWN', ['Moons', 'Suns', 'Leaves'], 'the HARVEST', 'pawn_harvest.png',0));
-		deck.push(makeCard('PAWN', ['Suns', 'Waves', 'Knots'], 'the LIGHT KEEPER', 'pawn_light_keeper.png',0));
-		deck.push(makeCard('PAWN', ['Moons', 'Wyrms', 'Knots'], 'the WATCHMAN', 'pawn_watchman.png',0));
-		deck.push(makeCard('COURT', ['Moons', 'Waves', 'Knots'], 'the CONSUL', '11_court_consul.png',0));
-		deck.push(makeCard('COURT', ['Suns', 'Waves', 'Wyrms'], 'the ISLAND', '11_court_island.png',0));
-		deck.push(makeCard('COURT', ['Moons', 'Leaves', 'Wyrms'], 'the RITE', '11_court_rite.png',0));
-		deck.push(makeCard('COURT', ['Suns', 'Leaves', 'Knots'], 'the WINDOW', '11_court_window.png',0));
-	}
-	deck.push(makeCard('CROWN', ['Knots'], 'the WINDFALL', 'crown_knots.png',10));
-	deck.push(makeCard('CROWN', ['Leaves'], 'the END', 'crown_leaves.png',10));
-	deck.push(makeCard('CROWN', ['Moons'], 'the HUNTRESS', 'crown_moons.png',10));
-	deck.push(makeCard('CROWN', ['Suns'], 'the BARD', 'crown_suns.png',10));
-	deck.push(makeCard('CROWN', ['Waves'], 'the SEA', 'crown_waves.png',10));
-	deck.push(makeCard('CROWN', ['Wyrms'], 'the CALAMITY', 'crown_wyrms.png',10));
+	var base = [
+		['Ace', ['Knots'], 'Ace of Knots', '1_ace_knots.png',1],
+		['Ace', ['Leaves'], 'Ace of Leaves', '1_ace_leaves.png',1],
+		['Ace', ['Moons'], 'Ace of Moons', '1_ace_moons.png',1],
+		['Ace', ['Suns'], 'Ace of Suns', '1_ace_suns.png',1],
+		['Ace', ['Waves'], 'Ace of Waves', '1_ace_waves.png',1],
+		['Ace', ['Wyrms'], 'Ace of Wyrms', '1_ace_wyrms.png',1],
+		['2', ['Moons', 'Knots'], 'the AUTHOR', '2_author.png',2],
+		['2', ['Suns', 'Wyrms'], 'the DESERT', '2_desert.png',2],
+		['2', ['Waves', 'Leaves'], 'the ORIGIN', '2_origin.png',2],
+		['3', ['Moons', 'Waves'], 'the JOURNEY', '3_journey.png',3],
+		['3', ['Suns', 'Knots'], 'the PAINTER', '3_painter.png',3],
+		['3', ['Leaves', 'Wyrms'], 'the SAVAGE', '3_savage.png',3],
+		['4', ['Wyrms', 'Knots'], 'the BATTLE', '4_battle.png',4],
+		['4', ['Moons', 'Suns'], 'the MOUNTAIN', '4_mountain.png',4],
+		['4', ['Waves', 'Leaves'], 'the SAILOR', '4_sailor.png',4],
+		['5', ['Suns', 'Waves'], 'the DISCOVERY', '5_discovery.png',5],
+		['5', ['Moons', 'Leaves'], 'the FOREST', '5_forest.png',5],
+		['5', ['Wyrms', 'Knots'], 'the SOLDIER', '5_soldier.png',5],
+		['6', ['Moons', 'Waves'], 'the LUNATIC', '6_lunactic.png',6],
+		['6', ['Leaves', 'Knots'], 'the MARKET', '6_market.png',6],
+		['6', ['Suns', 'Wyrms'], 'the PENITENT', '6_penitent.png',6],
+		['7', ['Suns', 'Knots'], 'the CASTLE', '7_castle.png',7],
+		['7', ['Waves', 'Wyrms'], 'the CAVE', '7_cave.png',7],
+		['7', ['Moons', 'Leaves'], 'the CHANCE MEETING', '7_chance_meeting.png',7],
+		['8', ['Wyrms', 'Knots'], 'the BETRAYAL', '8_betrayal.png',8],
+		['8', ['Moons', 'Suns'], 'the DIPLOMAT', '8_diplomat.png',8],
+		['8', ['Waves', 'Leaves'], 'the MILL', '8_mill.png',8],
+		['9', ['Waves', 'Wyrms'], 'the DARKNESS', '9_darkness.png',9],
+		['9', ['Leaves', 'Knots'], 'the MERCHANT', '9_merchant.png',9],
+		['9', ['Moons', 'Suns'], 'the PACT', '9_pact.png',9],
+		['CROWN', ['Knots'], 'the WINDFALL', 'crown_knots.png',10],
+		['CROWN', ['Leaves'], 'the END', 'crown_leaves.png',10],
+		['CROWN', ['Moons'], 'the HUNTRESS', 'crown_moons.png',10],
+		['CROWN', ['Suns'], 'the BARD', 'crown_suns.png',10],
+		['CROWN', ['Waves'], 'the SEA', 'crown_waves.png',10],
+		['CROWN', ['Wyrms'], 'the CALAMITY', 'crown_wyrms.png',10]];
+	var excuse = [['', [], 'the EXCUSE', 'excuse.png', 0]];
+	var extended = [
+		['PAWN', ['Waves', 'Leaves', 'Wyrms'], 'the BORDERLAND', 'pawn_borderland.png',0],
+		['PAWN', ['Moons', 'Suns', 'Leaves'], 'the HARVEST', 'pawn_harvest.png',0],
+		['PAWN', ['Suns', 'Waves', 'Knots'], 'the LIGHT KEEPER', 'pawn_light_keeper.png',0],
+		['PAWN', ['Moons', 'Wyrms', 'Knots'], 'the WATCHMAN', 'pawn_watchman.png',0],
+		['COURT', ['Moons', 'Waves', 'Knots'], 'the CONSUL', '11_court_consul.png',0],
+		['COURT', ['Suns', 'Waves', 'Wyrms'], 'the ISLAND', '11_court_island.png',0],
+		['COURT', ['Moons', 'Leaves', 'Wyrms'], 'the RITE', '11_court_rite.png',0],
+		['COURT', ['Suns', 'Leaves', 'Knots'], 'the WINDOW', '11_court_window.png',0]
+	];
+
+	var protodeck = base.slice();
 	if (m.route.param("extended") != "base" ) {
-		deck.push(makeCard('', [], 'the EXCUSE', 'excuse.png', 0));
+		protodeck = protodeck.concat(excuse);
 	}
+	if (m.route.param("extended") == "extended") {
+		protodeck = protodeck.concat(extended);
+	}
+
+	var deck = protodeck.map(function(cardstock,idx) {
+		return makeCard(idx,cardstock[0],cardstock[1],cardstock[2],cardstock[3],cardstock[4]);
+	});
+
 	return deck;
 	
-	function makeCard(rank, suits, name, image, value) {
+	function makeCard(id, rank, suits, name, image, value) {
 		return new aucteraden.Card({
+			id: id,
 			rank: rank,
 			suits: suits,
 			name: name,
