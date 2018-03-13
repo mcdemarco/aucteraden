@@ -403,6 +403,8 @@ aucteraden.drawExcuse = function(game) {
 
 aucteraden.drawMarket = function(game) {
 	game.message = "";
+	var stocky = game.deck.length;
+	var wasty = game.waste.length;
 	aucteraden.debug("Drawing the market.");
 	switch (game.marketType) {
 		case "normal":
@@ -426,6 +428,9 @@ aucteraden.drawMarket = function(game) {
 			game = aucteraden.drawRollingRecursive(game);
 			break;
 	}
+	var stocked = stocky - game.deck.length;
+	var wasted = game.waste.length - wasty;
+	game.message = "Drew " + stocked + " card" + (stocked != 1 ? "s" : "") + " and discarded " + wasted + ".";
 	game = aucteraden.done(game);
 	return game;
 };
