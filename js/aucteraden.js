@@ -861,7 +861,7 @@ variants.view = function(ctrl) {
 
 	return m("div", {className: "bodyWrapper"}, [
 		m("main", [
-//			m("div", {className: "leftWrapper"}, [
+			m("div", {className: "leftWrapper"}, [
 			m("div", {className: "leftColumn"}, [
 				m("header", [
 					m("h1", "Aucteraden"),
@@ -960,8 +960,8 @@ variants.view = function(ctrl) {
 				}),
 				m("div", {className: "scoreDiv"}, ctrl.game.score.badTokenPenalty)
 			]),
-//			]), //End leftWrapper
-//			m("div", {className: "rightWrapper"}, [
+			]), //End leftWrapper
+			m("div", {className: "rightWrapper"}, [
 			// Foundation
 			aucteraden.viewFoundation(ctrl),
 
@@ -979,7 +979,7 @@ variants.view = function(ctrl) {
 			]),
 
 		]),
-//		]),
+		]),
 		modal.view(function() {
 			return m("div", ctrl.versions.filter(function(v) {return v.type == m.route.param("market"); })[0].rules());
 		})
