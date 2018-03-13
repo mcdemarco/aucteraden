@@ -78,7 +78,7 @@ aucteraden.Deck = function() {
 	};
 };
 
-aucteraden.Game = function() {
+aucteraden.Game = function(black) {
 	var game = {
 		deck: aucteraden.shuffle(aucteraden.Deck()),
 		waste: [],
@@ -93,7 +93,7 @@ aucteraden.Game = function() {
 		unpaid:  {suits: [], price: 0},
 		discards: 0,
 		tokens: {Moons: 4, Suns: 4, Waves: 4, Leaves: 4, Wyrms: 4,  Knots: 4},
-		blackMoons: false,
+		blackMoons: black ? black : false,
 		previous: ""
 	};
 	game = aucteraden.score(game);
@@ -824,7 +824,7 @@ variants.controller = function() {
 	this.extended = variants.ExtendedDeck();
 	
 	this.reset = function() {
-		this.game = aucteraden.Game();
+		this.game = aucteraden.Game(this.game.blackMoons);
 		//Initial save.
 		aucteraden.save(this.game);
 	};
