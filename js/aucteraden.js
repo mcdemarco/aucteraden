@@ -545,19 +545,23 @@ aucteraden.play = function(game,r,c) {
 		//Rechecks for doneness.
 		game = aucteraden.drawMarket(game);
 		//Save here.
-		game = aucteraden.save(game);
+		aucteraden.save(game);
 	}
 	return game;
 };
 
 aucteraden.save = function(game) {
+	//Copy game; leave off the undoception for space.
+	var stringyGame = JSON.parse(JSON.stringify(game));
+	stringyGame.previous = "";
+	stringyGame = JSON.stringify(stringyGame);
+	console.log(stringyGame);
 	try {
-		var stringyGame = JSON.stringify(game);
 		localStorage.setItem("auct", stringyGame);
 	} catch(e) {
 		aucteraden.debug("Autosave failed.");
 	}
-	return game;
+	return;
 };
 
 /* endgame */
@@ -720,13 +724,13 @@ aucteraden.scoreRunsAndBonuses = function(game) {
 /* storage and undos */
 
 aucteraden.checkpoint = function(game) {
-	game.previous = JSON.stringify(game);
+	game.previous = JSON.parse(JSON.stringify(game));
 	return game;
 };
 
 aucteraden.undo = function(game) {
-	if (game.previous.length > 0)
-		game = JSON.parse(game.previous);
+	if (Object.keys(game.previous).length > 0)
+		game = game.previous;
 	else
 		game.message = "Nothing to undo.";
 	return game;
