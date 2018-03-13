@@ -88,11 +88,11 @@ aucteraden.Game = function() {
 		marketType: m.route.param("market"),
 		message: "",
 		over: false,
-		score: {total: 0, badTokenPenalty: -30, suit: {Moons: -5, Suns: -5, Knots: -5, Waves: -5, Leaves: -5, Wyrms: -5, total: -30}},
+		score: {total: 0, badTokenPenalty: -30, suit: {Moons: -5, Suns: -5, Waves: -5, Leaves: -5, Wyrms: -5, Knots: -5, total: -30}},
 		splayed: false,
 		unpaid:  {suits: [], price: 0},
 		discards: 0,
-		tokens: {Moons: 4, Suns: 4, Knots: 4, Waves: 4, Leaves: 4, Wyrms: 4},
+		tokens: {Moons: 4, Suns: 4, Waves: 4, Leaves: 4, Wyrms: 4,  Knots: 4},
 		blackMoons: false,
 		previous: ""
 	};
