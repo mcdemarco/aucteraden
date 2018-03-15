@@ -151,6 +151,56 @@ aucteraden.debug = function(msg) {
 
 /* deck functions */
 
+aucteraden.deck = [
+	['Ace', ['Knots'], 'Ace of Knots', '1_ace_knots.png',1],
+	['Ace', ['Leaves'], 'Ace of Leaves', '1_ace_leaves.png',1],
+	['Ace', ['Moons'], 'Ace of Moons', '1_ace_moons.png',1],
+	['Ace', ['Suns'], 'Ace of Suns', '1_ace_suns.png',1],
+	['Ace', ['Waves'], 'Ace of Waves', '1_ace_waves.png',1],
+	['Ace', ['Wyrms'], 'Ace of Wyrms', '1_ace_wyrms.png',1],
+	['2', ['Moons', 'Knots'], 'the AUTHOR', '2_author.png',2],
+	['2', ['Suns', 'Wyrms'], 'the DESERT', '2_desert.png',2],
+	['2', ['Waves', 'Leaves'], 'the ORIGIN', '2_origin.png',2],
+	['3', ['Moons', 'Waves'], 'the JOURNEY', '3_journey.png',3],
+	['3', ['Suns', 'Knots'], 'the PAINTER', '3_painter.png',3],
+	['3', ['Leaves', 'Wyrms'], 'the SAVAGE', '3_savage.png',3],
+	['4', ['Wyrms', 'Knots'], 'the BATTLE', '4_battle.png',4],
+	['4', ['Moons', 'Suns'], 'the MOUNTAIN', '4_mountain.png',4],
+	['4', ['Waves', 'Leaves'], 'the SAILOR', '4_sailor.png',4],
+	['5', ['Suns', 'Waves'], 'the DISCOVERY', '5_discovery.png',5],
+	['5', ['Moons', 'Leaves'], 'the FOREST', '5_forest.png',5],
+	['5', ['Wyrms', 'Knots'], 'the SOLDIER', '5_soldier.png',5],
+	['6', ['Moons', 'Waves'], 'the LUNATIC', '6_lunactic.png',6],
+	['6', ['Leaves', 'Knots'], 'the MARKET', '6_market.png',6],
+	['6', ['Suns', 'Wyrms'], 'the PENITENT', '6_penitent.png',6],
+	['7', ['Suns', 'Knots'], 'the CASTLE', '7_castle.png',7],
+	['7', ['Waves', 'Wyrms'], 'the CAVE', '7_cave.png',7],
+	['7', ['Moons', 'Leaves'], 'the CHANCE MEETING', '7_chance_meeting.png',7],
+	['8', ['Wyrms', 'Knots'], 'the BETRAYAL', '8_betrayal.png',8],
+	['8', ['Moons', 'Suns'], 'the DIPLOMAT', '8_diplomat.png',8],
+	['8', ['Waves', 'Leaves'], 'the MILL', '8_mill.png',8],
+	['9', ['Waves', 'Wyrms'], 'the DARKNESS', '9_darkness.png',9],
+	['9', ['Leaves', 'Knots'], 'the MERCHANT', '9_merchant.png',9],
+	['9', ['Moons', 'Suns'], 'the PACT', '9_pact.png',9],
+	['CROWN', ['Knots'], 'the WINDFALL', 'crown_knots.png',10],
+	['CROWN', ['Leaves'], 'the END', 'crown_leaves.png',10],
+	['CROWN', ['Moons'], 'the HUNTRESS', 'crown_moons.png',10],
+	['CROWN', ['Suns'], 'the BARD', 'crown_suns.png',10],
+	['CROWN', ['Waves'], 'the SEA', 'crown_waves.png',10],
+	['CROWN', ['Wyrms'], 'the CALAMITY', 'crown_wyrms.png',10],
+	['', [], 'the EXCUSE', 'excuse.png', 0],
+	['PAWN', ['Waves', 'Leaves', 'Wyrms'], 'the BORDERLAND', 'pawn_borderland.png',0],
+	['PAWN', ['Moons', 'Suns', 'Leaves'], 'the HARVEST', 'pawn_harvest.png',0],
+	['PAWN', ['Suns', 'Waves', 'Knots'], 'the LIGHT KEEPER', 'pawn_light_keeper.png',0],
+	['PAWN', ['Moons', 'Wyrms', 'Knots'], 'the WATCHMAN', 'pawn_watchman.png',0],
+	['COURT', ['Moons', 'Waves', 'Knots'], 'the CONSUL', '11_court_consul.png',0],
+	['COURT', ['Suns', 'Waves', 'Wyrms'], 'the ISLAND', '11_court_island.png',0],
+	['COURT', ['Moons', 'Leaves', 'Wyrms'], 'the RITE', '11_court_rite.png',0],
+	['COURT', ['Suns', 'Leaves', 'Knots'], 'the WINDOW', '11_court_window.png',0]
+];
+
+
+
 aucteraden.shuffle = function(deck) {
 	var shuffled = [];
 	while(deck.length > 0) {
@@ -351,7 +401,7 @@ aucteraden.viewFoundation = function(ctrl) {
 			if (currRowArray.length > 0) {
 				return m("div", {className: "foundation"}, [
 					currRowArray.map(function(card,idc) {
-						return m("img", {className: "card", src: "cards/" + (ctrl.game.blackMoons ? card.blackImage : card.image), style: "left: 1em", onclick: aucteraden.isBlank(card) ? ctrl.play.bind(ctrl,idr,idc) : ""});
+						return m("img", {className: "card", src: "cards/" + ctrl.getImageById(card.id,ctrl.game.blackMoons), style: "left: 1em", onclick: aucteraden.isBlank(card) ? ctrl.play.bind(ctrl,idr,idc) : ""});
 					})
 				]);
 			} else {
@@ -573,7 +623,6 @@ aucteraden.save = function(game) {
 	var stringyGame = JSON.parse(JSON.stringify(game));
 	stringyGame.previous = "";
 	stringyGame = JSON.stringify(stringyGame);
-	console.log(stringyGame);
 	try {
 		localStorage.setItem("auct", stringyGame);
 	} catch(e) {
@@ -871,6 +920,18 @@ variants.controller = function() {
 		this.game = aucteraden.undo(this.game);
 	};
 
+	this.getImageById = function(id,blackMoons) {
+		var card = aucteraden.deck[id];
+		if (typeof id != "undefined")
+			return (blackMoons && card[1].indexOf("Moons") > -1) ? card[3].split(".png")[0] + "_black.png" : card[3];
+		else {
+			console.log("Returning blank on id " + id);
+			return "blank.png";
+		}
+	};
+	this.getRankById = function(id) {
+		return aucteraden.deck[id][0];
+	};
 };
 
 //view
@@ -934,12 +995,12 @@ variants.view = function(ctrl) {
 						m("h4","Waste (" + ctrl.game.waste.length + ")"),
 						m("img", {className: "card", src: "cards/blank.png"}),
 						ctrl.game.waste.map(function(cardObj,index) {
-							return m("img", {className: "card", src: "cards/" + (ctrl.game.blackMoons ? cardObj.blackImage : cardObj.image), onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
+							return m("img", {className: "card", src: "cards/" + ctrl.getImageById(cardObj.id,ctrl.game.blackMoons), onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
 						})
 					]),
 					m("div", {className: "play"}, [
 						m("h4", {className: ctrl.game.unpaid.price ? "message" : ""}, (ctrl.game.unpaid.price ? "Pay " + ctrl.game.unpaid.price : "Play")),
-						m("img", {className: "card", src: "cards/" + (ctrl.game.blackMoons ? ctrl.game.play.blackImage : ctrl.game.play.image)})
+						m("img", {className: "card", src: "cards/" + ctrl.getImageById(ctrl.game.play.id,ctrl.game.blackMoons)})
 					])
 				]),
 				//Messages
@@ -950,8 +1011,8 @@ variants.view = function(ctrl) {
 				m("div", {className: "marketWrapper"}, [
 					[2,1,0].map(function(row) {
 						return m("div", {className: "stock"}, [
-							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && (ctrl.game.market[row].rank == "PAWN" || ctrl.game.market[row].rank == "COURT") ? " + 1" : "")),
-							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? (ctrl.game.blackMoons ? ctrl.game.market[row].blackImage : ctrl.game.market[row].image) : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
+							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && (ctrl.getRankById(ctrl.game.market[row].id) == "PAWN" || ctrl.getRankById(ctrl.game.market[row].id) == "COURT") ? " + 1" : "")),
+							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.getImageById(ctrl.game.market[row].id,ctrl.game.blackMoons) : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
 						]);
 					})
 				]),

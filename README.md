@@ -1,8 +1,14 @@
-# Aucteraden Scoresheet
+# Aucteraden
+
+## Scoresheet
 
 While playing the Decktet solitaire game Aucteraden I got annoyed with the complicated scorekeeping, so I wrote this scoresheet program using Vue.js.
 
 The scoresheet includes an interactive rules summary for the game.
+
+## Game
+
+I started out implementing the game in Vue with Vuex, but then switched to Mithril 0.2.5.
 
 ## Credits
 
