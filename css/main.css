@@ -152,7 +152,7 @@ div.footer:last-child {
     color: #003;
 }
 
-img {
+img.token {
     height:30px;
     vertical-align:bottom;
     background-color: white;
@@ -351,7 +351,8 @@ div.stock h4, div.waste h4, div.play h4 {
 
 /* the popup rules */
 
-div.modal {
+div.modal,
+div.modal2 {
     position: fixed;
     top: 5%;
     right: 5%;
@@ -404,6 +405,13 @@ p.description {
    embiggened size: 186x261
    card source file size: 372x522 
 */
+
+img.ref {
+    border-radius:6px;
+    max-width: 363px;
+    max-height: 363px;
+    margin: 0.5em;
+}
 
 img.card {
     width:124px;

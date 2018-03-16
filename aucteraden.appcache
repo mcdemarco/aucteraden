@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# v0.1.4a # 2018-03-13
+# v0.1.5a # 2018-03-15
 # aucteraden.html is the file that calls this manifest.
 
 CACHE:
@@ -13,6 +13,9 @@ css/skulls.png
 css/suns.png
 css/waves.png
 css/wyrms.png
+css/cardRef.png
+css/nonesuchRef.png
+css/pawnsAndCourtsRef.png
 js/mithril.js
 js/aucteraden.js
 cards/11_court_consul.png
