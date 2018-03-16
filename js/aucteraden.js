@@ -199,7 +199,34 @@ aucteraden.deck = [
 	['COURT', ['Suns', 'Leaves', 'Knots'], 'the WINDOW', '11_court_window.png',0]
 ];
 
+aucteraden.getImageById = function(id,blackMoons) {
+	if (typeof id != "undefined" && id >= 0) {
+		var card = aucteraden.deck[id];
+		return (blackMoons && card[1].indexOf("Moons") > -1) ? card[3].split(".png")[0] + "_black.png" : card[3];
+	} else {
+		console.log("Returning blank on id " + id);
+		return "blank.png";
+	}
+};
 
+aucteraden.getNameById = function(id) {
+	if (id < 0)
+		return "blank";
+	else
+		return aucteraden.deck[id][2];
+};
+
+aucteraden.getRankById = function(id) {
+	return aucteraden.deck[id][0];
+};
+
+aucteraden.getSuitsById = function(id) {
+	return aucteraden.deck[id][1];
+};
+
+aucteraden.getValueById = function(id) {
+	return aucteraden.deck[id][4];
+};
 
 aucteraden.shuffle = function(deck) {
 	var shuffled = [];
@@ -213,11 +240,16 @@ aucteraden.shuffle = function(deck) {
 };
 
 aucteraden.isBlank = function(card) {
-	return card.name == "blank";
+	return aucteraden.getNameById(card.id) == "blank";
+};
+
+aucteraden.isExcuse = function(card) {
+	return aucteraden.getNameById(card.id) == 'the EXCUSE';
 };
 
 aucteraden.makeBlank = function() {
 	return new aucteraden.Card({
+		id: -1,
 		rank: "BLANK",
 		suits: [],
 		name: "blank",
@@ -440,11 +472,10 @@ aucteraden.discardMarket = function(game) {
 
 aucteraden.drawExcuse = function(game) {
 	//Should be checked by the caller but no harm in rechecking.
-	if (game.deck[game.deck.length-1].name == 'the EXCUSE') {
+	if (aucteraden.isExcuse(game.deck[game.deck.length-1])) {
 		var drawn = game.deck.pop();
 		game.message = "Drew the EXCUSE and cleared the market.";
 		aucteraden.debug("Drew the EXCUSE and cleared the market.");
-		aucteraden.debug(game.market.reduce(function(acc,cardObj){return acc + " " + cardObj.name;},"Market was: "));
 		game.waste.push(drawn);
 		game = aucteraden.clearMarket(game);
 	}
@@ -488,13 +519,13 @@ aucteraden.drawMarket = function(game) {
 aucteraden.drawSimpleOnce = function(game) {
 	//A market draw with no suit checking.
 	if (game.market.length < 3 && game.deck.length > 0) {
-		if (game.deck[game.deck.length-1].name == 'the EXCUSE')
+		if (aucteraden.isExcuse(game.deck[game.deck.length-1]))
 			game = aucteraden.drawExcuse(game);
 		else {
 			var drawn = game.deck.pop();
 			game.market.push(drawn);
-			game.message = "Drew " + drawn.name + ". ";
-			aucteraden.debug("Drew " + drawn.name + ".");
+			game.message = "Drew " + aucteraden.getNameById(drawn.id) + ". ";
+			aucteraden.debug("Drew " + aucteraden.getNameById(drawn.id) + ".");
 		}
 	}
 	return game;
@@ -503,18 +534,18 @@ aucteraden.drawSimpleOnce = function(game) {
 aucteraden.drawRollingOnce = function(game) {
 	//A market draw that can discard other market cards based on suits.
 	if (game.market.length < 3 && game.deck.length > 0) {
-		if (game.deck[game.deck.length-1].name == 'the EXCUSE') {
+		if (aucteraden.isExcuse(game.deck[game.deck.length-1])) {
 			game = aucteraden.drawExcuse(game);
 		} else {
 			var drawn = game.deck.pop();
-			game.message = "Drew " + drawn.name + ". ";
-			aucteraden.debug("Drew " + drawn.name + " (rolling).");
+			game.message = "Drew " + aucteraden.getNameById(drawn.id) + ". ";
+			aucteraden.debug("Drew " + aucteraden.getNameById(drawn.id) + " (rolling).");
 			var suits = drawn.suits;
 			//Suit nuking removes matching cards from the market.
 			for (var idx = game.market.length; idx > 0; idx--) {
 				var cardObj = game.market[idx-1];
 				if (cardObj.hasOwnProperty("suits") && aucteraden.findOne(cardObj.suits,suits)) {
-					aucteraden.debug("Discarded " + cardObj.name + ".");
+					aucteraden.debug("Discarded " + aucteraden.getNameById(cardObj.id) + ".");
 					game.waste.push(game.market.splice(idx-1,1)[0]);
 				};
 			};
@@ -540,7 +571,7 @@ aucteraden.buy = function(game,row) {
 	if (game.over)
 		return game;
 	//Buy a card from the market.
-	if (game.play.name != "blank") {
+	if (!(aucteraden.isBlank(game.play))) {
 		game.message = "Play previous card first.";
 		return game;
 	}
@@ -550,7 +581,7 @@ aucteraden.buy = function(game,row) {
 	}
 
 	var buyCard = game.market[row];
-	aucteraden.debug("Trying to buy " + buyCard.name + ".");
+	aucteraden.debug("Trying to buy " + aucteraden.getNameById(buyCard.id) + ".");
 
 	if (!aucteraden.priceChecker(game.tokens,buyCard,row)) {
 		game.message = "You cannot afford that card.";
@@ -559,8 +590,8 @@ aucteraden.buy = function(game,row) {
 	} else {
 		game = aucteraden.checkpoint(game);
 		game.play = game.market.splice(row,1)[0];
-		aucteraden.debug("Buying " + buyCard.name + ".");
-		game.message = ("Buying " + buyCard.name + ".");
+		aucteraden.debug("Buying " +  aucteraden.getNameById(buyCard.id) + ".");
+		game.message = ("Buying " +  aucteraden.getNameById(buyCard.id) + ".");
 		game = aucteraden.autopay(game,buyCard,row);
 	} 
 	return game;
@@ -603,8 +634,8 @@ aucteraden.play = function(game,r,c) {
 		game.message = "That placement is not allowed.";
 	} else {
 		game.foundation[r][c] = game.play;
-		aucteraden.debug("Played " + game.play.name + " to the tableau.");
-		game.message = "Played " + game.play.name + " to the tableau.";
+		aucteraden.debug("Played " + aucteraden.getNameById(game.play.id) + " to the tableau.");
+		game.message = "Played " + aucteraden.getNameById(game.play.id) + " to the tableau.";
 		game.play = aucteraden.makeBlank();
 		//Score here.
 		game = aucteraden.score(game);
@@ -921,16 +952,11 @@ variants.controller = function() {
 	};
 
 	this.getImageById = function(id,blackMoons) {
-		var card = aucteraden.deck[id];
-		if (typeof id != "undefined")
-			return (blackMoons && card[1].indexOf("Moons") > -1) ? card[3].split(".png")[0] + "_black.png" : card[3];
-		else {
-			console.log("Returning blank on id " + id);
-			return "blank.png";
-		}
+		return aucteraden.getImageById(id,blackMoons);
 	};
+
 	this.getRankById = function(id) {
-		return aucteraden.deck[id][0];
+		return aucteraden.getRankById(id);
 	};
 };
 
