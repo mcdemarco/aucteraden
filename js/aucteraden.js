@@ -840,7 +840,11 @@ aucteraden.checkForGame = function() {
 		if (storedGame) {
 			storedGame = JSON.parse(storedGame);
 			//Note that routing may not match the game for a stored game, but this appears harmless.
-			return storedGame;
+			//Need to check that the stored game matches the current data type (changing in beta).
+			if (storedGame.deck[0] && storedGame.deck[0].hasOwnProperty("id"))
+				return storedGame;
+			else
+				return aucteraden.Game();
 		} else {
 			return aucteraden.Game();
 		}
