@@ -857,6 +857,13 @@ var modal = {
 	}
 };
 
+var modal2 = {
+	visible: m.prop(false),
+	view: function(body) {
+		return modal2.visible() ? m("div.modal2", body()) : "";
+	}
+};
+
 //The variants module.
 var variants = {};
 
@@ -896,6 +903,7 @@ variants.Extended = function(data) {
 	this.type = data.type;
 	this.title = data.title;
 	this.description = data.description;
+	this.stats = m.prop(data.stats);
 };
 
 variants.ExtendedDeck = function() {
@@ -905,11 +913,20 @@ variants.ExtendedDeck = function() {
 	list.push(makeExtended("extended","Extended deck","Include all cards from the extended deck."));
 	return list;
 	
-	function makeExtended(type, title, description) {
+	function makeExtended(type, title, description, stats) {
 		return new variants.Extended({
 			type: type,
 			title: title,
-			description: description
+			description: description,
+			stats: m("div", {className: "rules"}, [
+				m("h2", "Card Statistics"),
+				m("div", [
+					m("img", {className: "ref", src: "css/cardRef.png"}),
+					m("img", {className: "ref", src: "css/nonesuchRef.png"}),
+					m("img", {className: "ref", style: (type=="extended" ? "" : "display:none"), src: "css/pawnsAndCourtsRef.png"}),
+				]),
+				m("button[type=button]", {onclick: modal2.visible.bind(this, false)}, "Close")
+			])
 		});
 	}	
 };
@@ -1006,9 +1023,10 @@ variants.view = function(ctrl) {
 					])
 				]),
 				m("div", {className: "buttonWrapper"}, [
-					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl)}, "New Game"),
+					m("button[type=button]", {className: "mainButton", onclick: ctrl.reset.bind(ctrl), title: "Start New Game"}, "New"),
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.undo.bind(ctrl)}, "Undo"),
 					m("button[type=button]", {className: "mainButton", onclick: modal.visible.bind(ctrl, true)}, "Rules"),
+					m("button[type=button]", {className: "mainButton", onclick: modal2.visible.bind(ctrl, true)}, "Cards"),
 					m("button[type=button]", {className: "mainButton", onclick: ctrl.discard.bind(ctrl, true)}, "Discard Market" + (ctrl.game.discards ? " (" + ctrl.game.discards * -3 + ")" : ""))
 				]),
 				// Stock and waste.
@@ -1087,6 +1105,9 @@ variants.view = function(ctrl) {
 		]),
 		modal.view(function() {
 			return m("div", ctrl.versions.filter(function(v) {return v.type == m.route.param("market"); })[0].rules());
+		}),
+		modal2.view(function() {
+			return m("div", ctrl.extended.filter(function(v) {return v.type == m.route.param("extended"); })[0].stats());
 		})
 	]);
 };
