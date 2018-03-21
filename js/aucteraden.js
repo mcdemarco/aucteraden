@@ -217,11 +217,17 @@ aucteraden.getNameById = function(id) {
 };
 
 aucteraden.getRankById = function(id) {
-	return aucteraden.deck[id][0];
+	if (id < 0)
+		return "BLANK";
+	else
+		return aucteraden.deck[id][0];
 };
 
 aucteraden.getSuitsById = function(id) {
-	return aucteraden.deck[id][1];
+	if (id < 0)
+		return [];
+	else
+		return aucteraden.deck[id][1];
 };
 
 aucteraden.getValueById = function(id) {
@@ -245,6 +251,10 @@ aucteraden.isBlank = function(card) {
 
 aucteraden.isExcuse = function(card) {
 	return aucteraden.getNameById(card.id) == 'the EXCUSE';
+};
+
+aucteraden.isPawnOrCourt = function(id) {
+	return (aucteraden.getRankById(id) == "PAWN" || aucteraden.getRankById(id) == "COURT");
 };
 
 aucteraden.makeBlank = function() {
@@ -361,7 +371,7 @@ aucteraden.legalNeighbors = function(tableau,r,c,newRank) {
 
 	//Accumulates truth until we hit a false.
   var isLegal = neighborArray.reduce(function(acc,neighborCard) {
-		var neighborly = aucteraden.ranksCanNeighbor(neighborCard.rank,newRank);
+		var neighborly = aucteraden.ranksCanNeighbor(aucteraden.getRankById(neighborCard.id),newRank);
 		return (acc && neighborly);
 	},true);
 	return isLegal;
@@ -399,8 +409,8 @@ aucteraden.positionChecker = function(tableau, newRank) {
 
 aucteraden.priceChecker = function(tokens, suitCard, price) {
 	//Can you afford it?
-	var cardSuits = suitCard.suits;
-	if (suitCard.rank == "PAWN" || suitCard.rank == "COURT")
+	var cardSuits = aucteraden.getSuitsById(suitCard.id);
+	if (aucteraden.isPawnOrCourt(suitCard.id))
 		price++;
 	if (price == 0)
 		return true;
@@ -409,17 +419,6 @@ aucteraden.priceChecker = function(tokens, suitCard, price) {
 			return true;
 	}
 	return false;
-};
-
-aucteraden.rankChecker = function(suitCard, row) {
-	//Degenerate case (adding to an empty foundation).
-	var aces = m.route.param("market") == "aces";
-	if (!aces && row.length == 0)
-		return true;
-	//Normal case.
-	var cardSuits = suitCard.suits;
-	var rowSuits;
-	return aucteraden.findOne(cardSuits, rowSuits);
 };
 
 //foundation template
@@ -540,11 +539,11 @@ aucteraden.drawRollingOnce = function(game) {
 			var drawn = game.deck.pop();
 			game.message = "Drew " + aucteraden.getNameById(drawn.id) + ". ";
 			aucteraden.debug("Drew " + aucteraden.getNameById(drawn.id) + " (rolling).");
-			var suits = drawn.suits;
+			var suits = aucteraden.getSuitsById(drawn.id);
 			//Suit nuking removes matching cards from the market.
 			for (var idx = game.market.length; idx > 0; idx--) {
 				var cardObj = game.market[idx-1];
-				if (cardObj.hasOwnProperty("suits") && aucteraden.findOne(cardObj.suits,suits)) {
+				if (cardObj.hasOwnProperty("suits") && aucteraden.findOne(aucteraden.getSuitsById(cardObj.id),suits)) {
 					aucteraden.debug("Discarded " + aucteraden.getNameById(cardObj.id) + ".");
 					game.waste.push(game.market.splice(idx-1,1)[0]);
 				};
@@ -585,7 +584,7 @@ aucteraden.buy = function(game,row) {
 
 	if (!aucteraden.priceChecker(game.tokens,buyCard,row)) {
 		game.message = "You cannot afford that card.";
-	} else if (!aucteraden.positionChecker(game.foundation,buyCard.rank)) {
+	} else if (!aucteraden.positionChecker(game.foundation,aucteraden.getRankById(buyCard.id))) {
 		game.message = "You cannot play that card.";
 	} else {
 		game = aucteraden.checkpoint(game);
@@ -598,9 +597,9 @@ aucteraden.buy = function(game,row) {
 };
 
 aucteraden.autopay = function(game,buyCard,row) {
-	var cardSuits = buyCard.suits;
+	var cardSuits = aucteraden.getSuitsById(buyCard.id);
 	var price = row;
-	if (buyCard.rank == "PAWN" || buyCard.rank == "COURT")
+	if (aucteraden.isPawnOrCourt(buyCard.id))
 		price++;
 	if (price == 0)
 		return game;
@@ -627,7 +626,7 @@ aucteraden.play = function(game,r,c) {
 	//Play the purchased card to the foundation.
 	if (game.unpaid.price) {
 		game.message = "Pay for the card before playing it.";
-	} else if (!aucteraden.legalNeighbors(game.foundation,r,c,game.play.rank)) {
+	} else if (!aucteraden.legalNeighbors(game.foundation,r,c,aucteraden.getRankById(game.play.id))) {
 		//Neighbor checking explicit position.
 		//There is at least one a legal placement for this card, 
 		//but no guarantee the user picked it.
@@ -687,11 +686,14 @@ aucteraden.findSingleCards = function(tableau,suit) {
 	var runs = [];
 	tableau.forEach(function(row,idr) {
 		row.forEach(function(card,idc) {
-
-			if (card.suits.indexOf(suit) > -1) {
+			if (aucteraden.getSuitsById(card.id).indexOf(suit) > -1) {
 				//Only one card in each single card run.
 				var scoreArray = [];
-				var scorable = {row:idr,column:idc,value:card.value,rank:card.rank};
+				var scorable = {row:idr,
+												column:idc,
+												value:aucteraden.getValueById(card.id),
+												rank:aucteraden.getRankById(card.id)
+											 };
 				scoreArray.push(scorable);
 				runs.push(scoreArray);
 			}
@@ -711,17 +713,25 @@ aucteraden.expandRuns = function(tableau,runs,suit) {
 		[-1,1].forEach(function(val) {
 			if (r + val >= 0 && r + val <= 3) {
 				card = tableau[r+val][c];
-				if (card.suits.indexOf(suit) > -1 && card.value > run.value) {
+				if (aucteraden.getSuitsById(card.id).indexOf(suit) > -1 && aucteraden.getValueById(card.id) > run.value) {
 					newArray = runArray.slice();
-					newArray.push({row:r+val,column:c,value:card.value,rank:card.rank});
+					newArray.push({row:r+val,
+												 column:c,
+												 value:aucteraden.getValueById(card.id),
+												 rank:aucteraden.getRankById(card.id)
+												});
 				  newRuns.push(newArray);
 				}
 			}
 			if (c + val >= 0 && c + val <= 3) {
 				card = tableau[r][c+val];
-				if (card.suits.indexOf(suit) > -1 && card.value > run.value) {
+				if (aucteraden.getSuitsById(card.id).indexOf(suit) > -1 && aucteraden.getValueById(card.id) > run.value) {
 					newArray = runArray.slice();
-					newArray.push({row:r,column:c+val,value:card.value,rank:card.rank});
+					newArray.push({row:r,
+												 column:c+val,
+												 value:aucteraden.getValueById(card.id),
+												 rank:aucteraden.getRankById(card.id)
+												});
 					newRuns.push(newArray);
 				}
 			}
@@ -976,8 +986,8 @@ variants.controller = function() {
 		return aucteraden.getImageById(id,blackMoons);
 	};
 
-	this.getRankById = function(id) {
-		return aucteraden.getRankById(id);
+	this.isPawnOrCourt = function(id) {
+		return aucteraden.isPawnOrCourt(id);
 	};
 };
 
@@ -1059,7 +1069,7 @@ variants.view = function(ctrl) {
 				m("div", {className: "marketWrapper"}, [
 					[2,1,0].map(function(row) {
 						return m("div", {className: "stock"}, [
-							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && (ctrl.getRankById(ctrl.game.market[row].id) == "PAWN" || ctrl.getRankById(ctrl.game.market[row].id) == "COURT") ? " + 1" : "")),
+							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && ctrl.isPawnOrCourt(ctrl.game.market[row].id) ? " + 1" : "")),
 							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.getImageById(ctrl.game.market[row].id,ctrl.game.blackMoons) : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
 						]);
 					})
