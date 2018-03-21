@@ -182,7 +182,6 @@ aucteraden.getImageById = function(id,blackMoons) {
 		var card = aucteraden.deck[id];
 		return (blackMoons && card[1].indexOf("Moons") > -1) ? card[3].split(".png")[0] + "_black.png" : card[3];
 	} else {
-		console.log("Returning blank on id " + id);
 		return "blank.png";
 	}
 };
