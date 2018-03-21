@@ -625,9 +625,8 @@ aucteraden.play = function(game,r,c) {
 };
 
 aucteraden.save = function(game) {
-	//Copy game; leave off the undoception for space.
+	//Copy game keeping undoception.
 	var stringyGame = JSON.parse(JSON.stringify(game));
-	stringyGame.previous = "";
 	stringyGame = JSON.stringify(stringyGame);
 	try {
 		localStorage.setItem("auct", stringyGame);
