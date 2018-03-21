@@ -4,16 +4,6 @@
 //the data model is a bit of a separate component
 var aucteraden = {};
 
-aucteraden.Card = function(data) {
-	this.id = data.id;
-	this.rank = data.rank;
-	this.suits = data.suits;
-	this.name = data.name;
-	this.image = data.image;
-	this.blackImage = data.blackImage;
-	this.value = data.value;
-};
-
 aucteraden.Deck = function() {
 	var base = [
 		['Ace', ['Knots'], 'Ace of Knots', '1_ace_knots.png',1],
@@ -73,22 +63,10 @@ aucteraden.Deck = function() {
 	}
 
 	var deck = protodeck.map(function(cardstock,idx) {
-		return makeCard(idx,cardstock[0],cardstock[1],cardstock[2],cardstock[3],cardstock[4]);
+		return idx;
 	});
 
 	return deck;
-	
-	function makeCard(id, rank, suits, name, image, value) {
-		return new aucteraden.Card({
-			id: id,
-			rank: rank,
-			suits: suits,
-			name: name,
-			image: image,
-			blackImage: (suits.indexOf("Moons") > -1) ? image.split(".png")[0] + "_black.png" : image,
-			value: value
-		});
-	};
 };
 
 aucteraden.Game = function(black) {
@@ -245,27 +223,24 @@ aucteraden.shuffle = function(deck) {
 	return shuffled;
 };
 
-aucteraden.isBlank = function(card) {
-	return aucteraden.getNameById(card.id) == "blank";
+aucteraden.isBlank = function(id) {
+	return aucteraden.getNameById(id) == "blank";
 };
 
-aucteraden.isExcuse = function(card) {
-	return aucteraden.getNameById(card.id) == 'the EXCUSE';
+aucteraden.isExcuse = function(id) {
+	return aucteraden.getNameById(id) == 'the EXCUSE';
 };
 
 aucteraden.isPawnOrCourt = function(id) {
 	return (aucteraden.getRankById(id) == "PAWN" || aucteraden.getRankById(id) == "COURT");
 };
 
+aucteraden.isRoyal = function(rank) {
+	return (["Ace","CROWN","PAWN","COURT"].indexOf(rank) > -1);
+};
+
 aucteraden.makeBlank = function() {
-	return new aucteraden.Card({
-		id: -1,
-		rank: "BLANK",
-		suits: [],
-		name: "blank",
-		image: "blank.png",
-		blackImage: "blank.png"
-	});
+	return -1;
 };
 
 aucteraden.makeFoundation = function() {
@@ -324,9 +299,9 @@ aucteraden.shiftFoundation = function(game,direction) {
 
 aucteraden.ranksCanNeighbor = function(rank1,rank2) {
 	//If either is not a special card, they can neighbor.
-	if (["Ace","CROWN","PAWN","COURT"].indexOf(rank1) < 0)
+	if (!(aucteraden.isRoyal(rank1)))
 		return true;
-	else if (["Ace","CROWN","PAWN","COURT"].indexOf(rank2) < 0)
+	else if (!(aucteraden.isRoyal(rank2)))
 		return true;
 	else if (rank1 == rank2) //Same special card not good.
 		return false;
@@ -364,14 +339,14 @@ aucteraden.legalNeighbors = function(tableau,r,c,newRank) {
 	//Used in positionChecker to test all positions, and when playing a card to test a single position.
 
 	//For degenerate values of newRank, return true.
-	if (["Ace","CROWN","PAWN","COURT"].indexOf(newRank) < 0)
+	if (!(aucteraden.isRoyal(newRank)))
 		return true;
 
 	var neighborArray = aucteraden.findNeighbors(tableau,r,c);
 
 	//Accumulates truth until we hit a false.
   var isLegal = neighborArray.reduce(function(acc,neighborCard) {
-		var neighborly = aucteraden.ranksCanNeighbor(aucteraden.getRankById(neighborCard.id),newRank);
+		var neighborly = aucteraden.ranksCanNeighbor(aucteraden.getRankById(neighborCard),newRank);
 		return (acc && neighborly);
 	},true);
 	return isLegal;
@@ -391,7 +366,7 @@ aucteraden.positionChecker = function(tableau, newRank) {
 	//Can you play it?  There's at least one blank space, but...
 
 	//If the rank is innocent, just return true.
-	if (["Ace","CROWN","PAWN","COURT"].indexOf(newRank) < 0)
+	if (!(aucteraden.isRoyal(newRank)))
 		return true;
 
 	//Check each spot in the tableau until we find one that is legal.
@@ -409,8 +384,8 @@ aucteraden.positionChecker = function(tableau, newRank) {
 
 aucteraden.priceChecker = function(tokens, suitCard, price) {
 	//Can you afford it?
-	var cardSuits = aucteraden.getSuitsById(suitCard.id);
-	if (aucteraden.isPawnOrCourt(suitCard.id))
+	var cardSuits = aucteraden.getSuitsById(suitCard);
+	if (aucteraden.isPawnOrCourt(suitCard))
 		price++;
 	if (price == 0)
 		return true;
@@ -432,7 +407,7 @@ aucteraden.viewFoundation = function(ctrl) {
 			if (currRowArray.length > 0) {
 				return m("div", {className: "foundation"}, [
 					currRowArray.map(function(card,idc) {
-						return m("img", {className: "card", src: "cards/" + ctrl.getImageById(card.id,ctrl.game.blackMoons), style: "left: 1em", onclick: aucteraden.isBlank(card) ? ctrl.play.bind(ctrl,idr,idc) : ""});
+						return m("img", {className: "card", src: "cards/" + ctrl.getImageById(card,ctrl.game.blackMoons), style: "left: 1em", onclick: aucteraden.isBlank(card) ? ctrl.play.bind(ctrl,idr,idc) : ""});
 					})
 				]);
 			} else {
@@ -523,8 +498,8 @@ aucteraden.drawSimpleOnce = function(game) {
 		else {
 			var drawn = game.deck.pop();
 			game.market.push(drawn);
-			game.message = "Drew " + aucteraden.getNameById(drawn.id) + ". ";
-			aucteraden.debug("Drew " + aucteraden.getNameById(drawn.id) + ".");
+			game.message = "Drew " + aucteraden.getNameById(drawn) + ". ";
+			aucteraden.debug("Drew " + aucteraden.getNameById(drawn) + ".");
 		}
 	}
 	return game;
@@ -537,14 +512,15 @@ aucteraden.drawRollingOnce = function(game) {
 			game = aucteraden.drawExcuse(game);
 		} else {
 			var drawn = game.deck.pop();
-			game.message = "Drew " + aucteraden.getNameById(drawn.id) + ". ";
-			aucteraden.debug("Drew " + aucteraden.getNameById(drawn.id) + " (rolling).");
-			var suits = aucteraden.getSuitsById(drawn.id);
+			game.message = "Drew " + aucteraden.getNameById(drawn) + ". ";
+			aucteraden.debug("Drew " + aucteraden.getNameById(drawn) + " (rolling).");
+			var suits = aucteraden.getSuitsById(drawn);
 			//Suit nuking removes matching cards from the market.
 			for (var idx = game.market.length; idx > 0; idx--) {
-				var cardObj = game.market[idx-1];
-				if (cardObj.hasOwnProperty("suits") && aucteraden.findOne(aucteraden.getSuitsById(cardObj.id),suits)) {
-					aucteraden.debug("Discarded " + aucteraden.getNameById(cardObj.id) + ".");
+				var cardId = game.market[idx-1];
+				var cardSuits = aucteraden.getSuitsById(cardId);
+				if (cardSuits.length > 0 && aucteraden.findOne(cardSuits,suits)) {
+					aucteraden.debug("Discarded " + aucteraden.getNameById(cardId) + ".");
 					game.waste.push(game.market.splice(idx-1,1)[0]);
 				};
 			};
@@ -580,26 +556,26 @@ aucteraden.buy = function(game,row) {
 	}
 
 	var buyCard = game.market[row];
-	aucteraden.debug("Trying to buy " + aucteraden.getNameById(buyCard.id) + ".");
+	aucteraden.debug("Trying to buy " + aucteraden.getNameById(buyCard) + ".");
 
 	if (!aucteraden.priceChecker(game.tokens,buyCard,row)) {
 		game.message = "You cannot afford that card.";
-	} else if (!aucteraden.positionChecker(game.foundation,aucteraden.getRankById(buyCard.id))) {
+	} else if (!aucteraden.positionChecker(game.foundation,aucteraden.getRankById(buyCard))) {
 		game.message = "You cannot play that card.";
 	} else {
 		game = aucteraden.checkpoint(game);
 		game.play = game.market.splice(row,1)[0];
-		aucteraden.debug("Buying " +  aucteraden.getNameById(buyCard.id) + ".");
-		game.message = ("Buying " +  aucteraden.getNameById(buyCard.id) + ".");
+		aucteraden.debug("Buying " +  aucteraden.getNameById(buyCard) + ".");
+		game.message = ("Buying " +  aucteraden.getNameById(buyCard) + ".");
 		game = aucteraden.autopay(game,buyCard,row);
 	} 
 	return game;
 };
 
 aucteraden.autopay = function(game,buyCard,row) {
-	var cardSuits = aucteraden.getSuitsById(buyCard.id);
+	var cardSuits = aucteraden.getSuitsById(buyCard);
 	var price = row;
-	if (aucteraden.isPawnOrCourt(buyCard.id))
+	if (aucteraden.isPawnOrCourt(buyCard))
 		price++;
 	if (price == 0)
 		return game;
@@ -626,15 +602,15 @@ aucteraden.play = function(game,r,c) {
 	//Play the purchased card to the foundation.
 	if (game.unpaid.price) {
 		game.message = "Pay for the card before playing it.";
-	} else if (!aucteraden.legalNeighbors(game.foundation,r,c,aucteraden.getRankById(game.play.id))) {
+	} else if (!aucteraden.legalNeighbors(game.foundation,r,c,aucteraden.getRankById(game.play))) {
 		//Neighbor checking explicit position.
 		//There is at least one a legal placement for this card, 
 		//but no guarantee the user picked it.
 		game.message = "That placement is not allowed.";
 	} else {
 		game.foundation[r][c] = game.play;
-		aucteraden.debug("Played " + aucteraden.getNameById(game.play.id) + " to the tableau.");
-		game.message = "Played " + aucteraden.getNameById(game.play.id) + " to the tableau.";
+		aucteraden.debug("Played " + aucteraden.getNameById(game.play) + " to the tableau.");
+		game.message = "Played " + aucteraden.getNameById(game.play) + " to the tableau.";
 		game.play = aucteraden.makeBlank();
 		//Score here.
 		game = aucteraden.score(game);
@@ -686,13 +662,13 @@ aucteraden.findSingleCards = function(tableau,suit) {
 	var runs = [];
 	tableau.forEach(function(row,idr) {
 		row.forEach(function(card,idc) {
-			if (aucteraden.getSuitsById(card.id).indexOf(suit) > -1) {
+			if (aucteraden.getSuitsById(card).indexOf(suit) > -1) {
 				//Only one card in each single card run.
 				var scoreArray = [];
 				var scorable = {row:idr,
 												column:idc,
-												value:aucteraden.getValueById(card.id),
-												rank:aucteraden.getRankById(card.id)
+												value:aucteraden.getValueById(card),
+												rank:aucteraden.getRankById(card)
 											 };
 				scoreArray.push(scorable);
 				runs.push(scoreArray);
@@ -713,24 +689,24 @@ aucteraden.expandRuns = function(tableau,runs,suit) {
 		[-1,1].forEach(function(val) {
 			if (r + val >= 0 && r + val <= 3) {
 				card = tableau[r+val][c];
-				if (aucteraden.getSuitsById(card.id).indexOf(suit) > -1 && aucteraden.getValueById(card.id) > run.value) {
+				if (aucteraden.getSuitsById(card).indexOf(suit) > -1 && aucteraden.getValueById(card) > run.value) {
 					newArray = runArray.slice();
 					newArray.push({row:r+val,
 												 column:c,
-												 value:aucteraden.getValueById(card.id),
-												 rank:aucteraden.getRankById(card.id)
+												 value:aucteraden.getValueById(card),
+												 rank:aucteraden.getRankById(card)
 												});
 				  newRuns.push(newArray);
 				}
 			}
 			if (c + val >= 0 && c + val <= 3) {
 				card = tableau[r][c+val];
-				if (aucteraden.getSuitsById(card.id).indexOf(suit) > -1 && aucteraden.getValueById(card.id) > run.value) {
+				if (aucteraden.getSuitsById(card).indexOf(suit) > -1 && aucteraden.getValueById(card) > run.value) {
 					newArray = runArray.slice();
 					newArray.push({row:r,
 												 column:c+val,
-												 value:aucteraden.getValueById(card.id),
-												 rank:aucteraden.getRankById(card.id)
+												 value:aucteraden.getValueById(card),
+												 rank:aucteraden.getRankById(card)
 												});
 					newRuns.push(newArray);
 				}
@@ -851,7 +827,7 @@ aucteraden.checkForGame = function() {
 			storedGame = JSON.parse(storedGame);
 			//Note that routing may not match the game for a stored game, but this appears harmless.
 			//Need to check that the stored game matches the current data type (changing in beta).
-			if (storedGame.deck[0] && storedGame.deck[0].hasOwnProperty("id"))
+			if (storedGame.deck[0] && !storedGame.deck[0].hasOwnProperty("id"))
 				return storedGame;
 			else
 				return aucteraden.Game();
@@ -1052,13 +1028,13 @@ variants.view = function(ctrl) {
 					m("div", {className: "waste"}, [
 						m("h4","Waste (" + ctrl.game.waste.length + ")"),
 						m("img", {className: "card", src: "cards/blank.png"}),
-						ctrl.game.waste.map(function(cardObj,index) {
-							return m("img", {className: "card", src: "cards/" + ctrl.getImageById(cardObj.id,ctrl.game.blackMoons), onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
+						ctrl.game.waste.map(function(cardId,index) {
+							return m("img", {className: "card", src: "cards/" + ctrl.getImageById(cardId,ctrl.game.blackMoons), onclick: function() {ctrl.game.splayed = !ctrl.game.splayed;}, style: "left: " + (ctrl.game.splayed ? index * 20 : 0) + "px"});
 						})
 					]),
 					m("div", {className: "play"}, [
 						m("h4", {className: ctrl.game.unpaid.price ? "message" : ""}, (ctrl.game.unpaid.price ? "Pay " + ctrl.game.unpaid.price : "Play")),
-						m("img", {className: "card", src: "cards/" + ctrl.getImageById(ctrl.game.play.id,ctrl.game.blackMoons)})
+						m("img", {className: "card", src: "cards/" + ctrl.getImageById(ctrl.game.play,ctrl.game.blackMoons)})
 					])
 				]),
 				//Messages
@@ -1069,8 +1045,8 @@ variants.view = function(ctrl) {
 				m("div", {className: "marketWrapper"}, [
 					[2,1,0].map(function(row) {
 						return m("div", {className: "stock"}, [
-							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && ctrl.isPawnOrCourt(ctrl.game.market[row].id) ? " + 1" : "")),
-							m("img", {className: "card", src: "cards/" + (ctrl.game.market[row] ? ctrl.getImageById(ctrl.game.market[row].id,ctrl.game.blackMoons) : "blank.png"), onclick: ctrl.buy.bind(ctrl,row)})
+							m("h4", (row == 0 ? "Free" : row + " Token" + (row == 2 ? "s" : "")) + (ctrl.game.market[row] && ctrl.isPawnOrCourt(ctrl.game.market[row]) ? " + 1" : "")),
+							m("img", {className: "card", src: "cards/" + ctrl.getImageById(ctrl.game.market[row],ctrl.game.blackMoons), onclick: ctrl.buy.bind(ctrl,row)})
 						]);
 					})
 				]),
