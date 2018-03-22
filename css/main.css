@@ -1,4 +1,4 @@
-﻿/* Styles for Magnate Roller by M. C. DeMarco.
+﻿/* Styles for Aucteraden by M. C. DeMarco.
    Background pattern from subtlepatterns.com */
 
 /* basics */
@@ -9,39 +9,54 @@
 
 /* layout */
 
-html, body {
+html, body, div.bodyWrapper {
     box-sizing:border-box;
     margin:0;
     height:100%;
     width:100%;
 }
 
-body {
+body, div.bodyWrapper {
     height: 100vh;
+    min-height:680px;
+    overflow:auto;
+}
+
+/* an unfortunate mithril necessity */
+div.bodyWrapper {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
 }
 
 /* font and color */
 
 @font-face {
     font-family: "Fortune Letters";
-    src: url(../css/fortune-letters.ttf) format("truetype");
+    src: url("../css/fortune-letters.ttf") format("truetype");
 }
 
 body {
     background-image: url('../css/skulls.png');
     font-family: 'Segoe UI', 'Century Gothic', 'Lucida Grande', Tahoma, 'Gill Sans', sans-serif;
-    color: #003;
+    color:#eeeeff;
 }
 
-div.wrapper, div.rules {
-    background-color: rgba(123,143,183,0.75); /* #7B8FB7 was #8E8EDA */
+span.legible {
+    font-family: 'Segoe UI', 'Century Gothic', 'Lucida Grande', Tahoma, 'Gill Sans', sans-serif;
+}
+
+div.wrapper {
+    background-color: rgba(179,190,212,0.55); /*23,143,183,0.75); #7B8FB7 was #8E8EDA */
     padding: 3%;
     margin: 1% 10%;
     height:auto;
     border-radius:10px;
+    color: #003;
 }
-div.wrapper {
-/*    font-size: large;*/
+div.wrapper.big {
+    font-size: large;
     text-align:center;
 }
 
@@ -49,29 +64,39 @@ h1, h2, h3, h4, h5, h6, strong, label, th {
     font-family: 'Fortune Letters', Futura, Geneva, sans-serif;
 }
 
-h1, h2, h3 {
-    text-align:center;
+h1, h2, h3, h4 {
+   text-align:center;
 }
 
-h2, h3 {
+h1, h4 {
+    margin-bottom:0;
+}
+
+h2, h3, h4 {
     margin-top: 0;
     padding-top: 0;
 }
 
 button {
     font-family: 'Fortune Letters', Futura, Geneva, sans-serif;
-    font-size: small;
-    padding: 3px 2px;
     font-weight:bold;
-}
-
-button.mainButton {
-    margin: 5px;
-    padding: 4px 6px;
     font-size: medium;
+    padding: 3px 4px;
+    margin: 5px;
+}
+button.mainButton, button.arrow {
     border-radius: 6px;
     background-color: white;
+}
+button.mainButton {
     font-weight:normal;
+}
+button.arrow {
+    position:absolute;
+    border-radius:50%;
+    padding: 4px 6px;
+    width:auto;
+    margin:0 auto;
 }
 
 span.bigger {
@@ -81,7 +106,6 @@ span.bigger {
 
 span.smaller {
     font-size: 18px;
-    color: #464653;
 }
 
 span.bad, span.smaller.bad {
@@ -109,19 +133,36 @@ span.smaller.bad {
     border: 1px solid #08089F; /* hue: 240 */
 }
 
+.nowrapp {
+    white-space:nowrap;
+}
+
 a, a:visited, a:hover {
     color: #30306C;
 }
 
-div.footer {
+footer, div.footer {
     text-align:center;
 }
 div.footer:last-child {
-    padding-bottom:1em;
+    padding:1em 0;
 }
 
-img {
+.scorer div.footer{
+    color: #003;
+}
+
+img.token {
     height:30px;
+    vertical-align:bottom;
+    background-color: white;
+    border: 2px solid #38486C;
+    border-radius: 50%;
+}
+
+img.smallMoon {
+    height:20px;
+    width:20px;
     vertical-align:bottom;
     background-color: white;
     border: 2px solid #38486C;
@@ -186,4 +227,270 @@ td.unbordered, th.unbordered {
 
 input[type=number] {
     width: 4em;
+}
+
+/* mithril section, trimmed */
+
+header {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    align-items: center;
+}
+
+main, div.leftWrapper, div.rightWrapper {
+    margin:0;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-justify-content: space-around;
+    justify-content: space-around;
+}
+main {
+    flex-wrap:wrap;
+}
+div.leftWrapper, div.rightWrapper {
+    margin:1em;
+}
+
+footer {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    align-items: center;
+}
+
+
+/* the left column of main contains .versionWrapper, .roundWrapper, and .deckWrapper */
+div.leftColumn {
+    -webkit-flex: 0 0 400px;
+    flex: 0 0 400px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    min-height:660px;
+    margin-right:1em;
+}
+
+.reserveWrapper {
+    text-align:center;
+    -webkit-flex: 0 0 175px;
+    flex: 0 0 175px;
+}
+
+
+.buttonWrapper, .versionWrapper, .deckWrapper, .roundWrapper, .marketWrapper, .tokenWrapper, .foundationWrapper, .scoreWrapper {
+    display: -webkit-flex;
+    display: flex;
+}
+.roundWrapper, .foundationWrapper, .tokenWrapper, .scoreWrapper {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+}
+
+.versionWrapper, .deckWrapper div, .marketWrapper div, .foundationWrapper div {
+    -webkit-flex-direction: row;
+    flex-direction: row;
+}
+
+/* .tokenWrapper & co are the skinny columns */
+
+.tokenWrapper, .scoreWrapper {
+    margin: 1em;
+    justify-content: center;
+    align-items:center;
+}
+
+/* .foundationWrapper is the third column in main */
+
+.foundationWrapper {
+    min-height: 660px;
+    min-width: 536px;
+/*    position:absolute;
+    top:0;
+    left:450px;*/
+    position:relative;
+    -webkit-justify-content: center;
+    justify-content: center;
+    align-items:center;
+    padding:1em;
+}
+
+.foundationWrapper,
+.foundation {
+    min-width: 536px;
+}
+
+.versionWrapper {
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+}
+
+.buttonWrapper {
+    -webkit-justify-content: center;
+    justify-content: center;
+}
+
+.roundWrapper .message {
+    text-align:center;
+    min-height:20px;
+}
+
+/* inside deckWrapper */
+div.stock, div.waste, div.play, div.market {
+    margin: 5px;
+}
+div.stock h4, div.waste h4, div.play h4 {
+    padding-bottom:3px;
+}
+
+/* the popup rules */
+
+div.modal,
+div.modal2 {
+    position: fixed;
+    top: 5%;
+    right: 5%;
+    width:66%;
+    min-width:660px;
+    padding: 2em;
+    border: 2px solid #003;
+    border-radius: 12px;
+    z-index: 3;
+    box-shadow:0 1px 8px rgba(123,143,183,0.75);
+    background: linear-gradient(rgba(123,143,183,0.75), rgba(179,190,212,0.55)), url('../css/skulls.png');
+    text-align:center;
+    max-height: 650px;
+    overflow:auto;
+}
+
+div.modal p {
+    text-align: justify;
+}
+/* there is also a div.rules inside the modal */
+
+
+/* font and color */
+
+@font-face {
+    font-family: "Fortune Letters";
+    src: url(../css/fortune-letters.ttf) format("truetype");
+}
+
+
+.message {
+    color: orange;
+}
+
+div.versionWrapper p, p.description, footer.description {
+    font-style:italic;
+    font-size:smaller;
+}
+
+p.description {
+    text-align:center;
+}
+
+/* cards */
+
+/* Sizing
+   original card size: 100x150
+   teeny size: 62x87
+   remix card size: 124x174
+   embiggened size: 186x261
+   card source file size: 372x522 
+*/
+
+img.ref {
+    border-radius:6px;
+    max-width: 363px;
+    max-height: 363px;
+    margin: 0.5em;
+}
+
+img.card {
+    width:124px;
+    height:174px;
+    border-radius:6px;
+    background-color: rgba(179,190,212,0.15); /* rgba(123,143,183,0.95);*/
+    border:thin solid #003;
+    background-size:124px 174px;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    user-drag: none;
+}
+
+div.waste {
+    position: relative;
+    z-index: 5;
+    min-width: 124px;
+}
+
+.waste img.card {
+    position: absolute;
+}
+
+.foundation img.card {
+    margin: 5px;
+}
+
+.tokenWrapper img.token {
+    margin-top:-7px;
+}
+
+.tokenWrapper div.tokenSet,
+.tokenWrapper div.tokenSetPay {
+    /*margin-top:7px;*/
+    padding: 10px 3px 3px 3px;
+}
+
+.tokenWrapper div.tokenSetPay {
+    border-radius: 6px;
+    border: 1px solid coral;
+    margin: 1px 0;
+    background-color: orange;
+}
+
+/* mobile */
+
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+p, input, textarea {
+ -webkit-user-select: text;
+ -moz-user-select: text;
+ -ms-user-select: text;
+ user-select: text;
+}
+
+.rules ol li,
+.rules ul li,
+.rules p {
+    color: #003; 
+    text-align:left;
+}
+.rules {
+    font-size: 14px;
+}
+
+/* runs display */
+div.score {
+    font-weight:bold;
+}
+div.scoreDiv {
+    text-align:center;
+    margin: 0.5em 0 0 0;
 }
