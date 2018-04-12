@@ -826,7 +826,7 @@ aucteraden.checkForGame = function() {
 			//Note that routing may not match the game for a stored game, but this appears harmless.
 			//Need to check that the stored game matches the current data type (changing in beta).
 			//Could use a better check.
-			if (storedGame.deck && storedGame.deck[0] && typeof storedGame.deck[0] == "number")
+			if (storedGame.deck && ((storedGame.deck[0] && typeof storedGame.deck[0] == "number") || (storedGame.waste[0] && typeof storedGame.waste[0] == "number")))
 				return storedGame;
 			else
 				return aucteraden.Game();
